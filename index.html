@@ -1041,7 +1041,34 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const S = { domain:'summitk12.atlassian.net', email:'miranda.schulz@summitk12.com', token:'', projectKey:'LMS', initiatives:[], initiativeDates:{}, fields:{ devBy:'', release:'', loe:'story_points', priority:'priority' }, lastSync:null, data:[], ganttOffsets:{}, ganttZoom:16, ganttActiveEngs:[], groups:[] };
+const S = {
+  domain: 'summitk12.atlassian.net',
+  email: 'miranda.schulz@summitk12.com',
+  token: '',
+  projectKey: 'LMS',
+  initiatives: [
+    'LMS-24393','LMS-24929','LMS-25279','LMS-25288','LMS-25289','LMS-24530','LMS-25263','LMS-24799',
+    'LMS-24517','LMS-25589','LMS-24415','LMS-24523','LMS-25741','LMS-26300','LMS-24837','LMS-23421',
+    'LMS-23457','LMS-25980','REPORTS-2315','LMS-25981','LMS-24525','LMS-24521','LMS-24834','LMS-24832',
+    'LMS-24543','LMS-26548','LMS-25172','LMS-26551','LMS-26552','LMS-24645','REPORTS-2317','LMS-27092',
+    'REPORTS-2489','LMS-26521','LMS-26210','LMS-26212','LMS-23747','LMS-26939','LMS-27735','LMS-27848'
+  ],
+  initiativeDates: {},
+  fields: {
+    devBy: 'customfield_10209',
+    release: 'customfield_11767',
+    loe: 'story_points',
+    priority: 'priority'
+  },
+  lastSync: null,
+  data: [],
+  ganttOffsets: {},
+  ganttZoom: 16,
+  ganttActiveEngs: [],
+  groups: [
+    { name: 'Trailblazers (K-1)', keys: ['LMS-24929','LMS-25279','LMS-25288','LMS-25289'] }
+  ]
+};
 // groups: [{ name:'Trailblazers K-1', keys:['LMS-24929','LMS-25279','LMS-25288','LMS-25289'] }, ...]
 let projSort = { col: null, dir: 1 }; // col: 'progress'|'devBy'|'goLive'|'risk', dir: 1=asc -1=desc
 
@@ -1056,7 +1083,7 @@ function loadSettings() {
       if(saved.token) S.token = saved.token;
       if(saved.projectKey) S.projectKey = saved.projectKey;
       // Always restore these
-      if(saved.initiatives) S.initiatives = saved.initiatives;
+      if(saved.initiatives && saved.initiatives.length > 0) S.initiatives = saved.initiatives;
       if(saved.initiativeDates) S.initiativeDates = saved.initiativeDates;
       if(saved.fields) Object.assign(S.fields, saved.fields);
       if(saved.lastSync) S.lastSync = saved.lastSync;
