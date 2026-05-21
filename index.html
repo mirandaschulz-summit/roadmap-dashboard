@@ -1214,21 +1214,19 @@ function showMsg(id, type, msg, duration=4000) {
 
 function auth() { return 'Basic ' + btoa(S.email+':'+S.token); }
 function apiUrl(path) {
-  // Split path from any query string it already contains
+  // Split path from any inline query string
   const qIdx = path.indexOf('?');
   const basePath = qIdx >= 0 ? path.substring(0, qIdx) : path;
   const existingQs = qIdx >= 0 ? path.substring(qIdx + 1) : '';
   const jiraPath = '/rest/api/3/' + basePath;
-  // Pass core params, then append any existing query string separately
   const domain = (S.domain||'').replace(/^https?:\/\//, '').replace(/\/$/, '');
-  const params = new URLSearchParams({
-    domain: domain,
-    email: S.email,
-    token: S.token,
-    path: jiraPath
-  });
-  const base = '/api/jira?' + params.toString();
-  return existingQs ? base + '&' + existingQs : base;
+  // Build URL manually so jiraPath is NOT percent-encoded by URLSearchParams
+  const emailEnc = encodeURIComponent(S.email);
+  const tokenEnc = encodeURIComponent(S.token);
+  const domainEnc = encodeURIComponent(domain);
+  let url = `/api/jira?domain=${domainEnc}&email=${emailEnc}&token=${tokenEnc}&path=${jiraPath}`;
+  if (existingQs) url += '&' + existingQs;
+  return url;
 }
 function fetchOpts() {
   // No Authorization header needed — proxy handles it server-side
