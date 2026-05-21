@@ -940,7 +940,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 <!-- SETTINGS -->
 <div class="section" id="tab-settings">
 
-  <!-- ── EDITABLE: API Token ── -->
+  <!-- EDITABLE: API Token -->
   <div class="card">
     <div class="card-title">Connect to Jira</div>
     <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Paste your personal Atlassian API token to authenticate. Everything else is pre-configured for Summit K12.</p>
@@ -962,19 +962,12 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     <div id="saveMsg" class="msg" style="margin-top:10px;"></div>
   </div>
 
-  <!-- hidden input kept for JS compat -->
-  <div style="display:none;">
-    <input type="text" id="initiativeInput" />
-  </div>
-
-  <!-- ── EDITABLE: Date overrides ── -->
+  <!-- EDITABLE: Date overrides -->
   <div class="card">
-    <div class="card-title">Initiative dates <span style="font-size:11px;font-weight:500;color:var(--success);background:var(--success-bg);padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;"><i class="ti ti-database"></i> Auto-synced from Jira</span></div>
-    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">
-      Dates are pulled from Jira automatically. Use overrides below only if a date differs from Jira — leave blank to use the Jira value.
-    </p>
+    <div class="card-title">Initiative date overrides <span style="font-size:11px;font-weight:500;color:var(--success);background:var(--success-bg);padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;"><i class="ti ti-database"></i> Auto-synced from Jira</span></div>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Dates are pulled from Jira automatically. Use overrides only if a date differs from Jira — leave blank to use the Jira value.</p>
     <div id="datesTableWrap">
-      <span style="font-size:12px;color:var(--text-3);">Add initiative keys above to set date overrides.</span>
+      <span style="font-size:12px;color:var(--text-3);">Sync Jira data first to see initiatives here.</span>
     </div>
     <div style="margin-top:14px;display:flex;align-items:center;gap:12px;">
       <button onclick="saveDates()"><i class="ti ti-device-floppy"></i> Save overrides</button>
@@ -982,14 +975,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     </div>
   </div>
 
-  <!-- ── READ-ONLY: Pre-configured settings ── -->
+  <!-- READ-ONLY: Pre-configured settings -->
   <div class="card">
     <div class="card-title" style="display:flex;align-items:center;gap:10px;">
       <span>Pre-configured settings</span>
       <span style="font-size:11px;font-weight:500;color:var(--text-3);background:var(--bg);border:1px solid var(--border);padding:2px 9px;border-radius:10px;">read-only</span>
     </div>
     <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">These values are hardcoded for Summit K12 and shared across all users. Contact your dashboard admin to change them.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
         <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Jira Domain</div>
         <div style="font-size:13px;font-weight:500;color:var(--text);">summitk12.atlassian.net</div>
@@ -1002,6 +995,15 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
         <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Project Key</div>
         <div style="font-size:13px;font-weight:500;color:var(--text);">LMS</div>
       </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Custom Fields</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8;">
+          Dev by: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">customfield_10209</code><br>
+          Release: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">customfield_11767</code><br>
+          LOE: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">story_points</code><br>
+          Priority: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">priority</code>
+        </div>
+      </div>
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;grid-column:span 2;">
         <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Initiatives — <span id="initiativeCount">40 keys</span></div>
         <div id="initiativeTags" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
@@ -1011,21 +1013,13 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
         <div id="groupsList"></div>
         <div id="groupsSaved" style="display:none;"></div>
       </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
-        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Custom Fields</div>
-        <div style="font-size:12px;color:var(--text-2);line-height:1.7;">
-          Dev by: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">customfield_10209</code><br>
-          Release: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">customfield_11767</code><br>
-          LOE: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">story_points</code><br>
-          Priority: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">priority</code>
-        </div>
-      </div>
     </div>
     <!-- Hidden inputs kept for JS compatibility -->
     <div style="display:none;">
       <input type="text" id="jiraDomain" />
       <input type="email" id="jiraEmail" />
       <input type="text" id="projectKey" />
+      <input type="text" id="initiativeInput" />
       <input type="text" id="fieldDevBy" />
       <input type="text" id="fieldRelease" />
       <input type="text" id="fieldLOE" />
@@ -1074,28 +1068,23 @@ let projSort = { col: null, dir: 1 }; // col: 'progress'|'devBy'|'goLive'|'risk'
 function loadSettings() {
   try {
     const s = localStorage.getItem('jira_dash');
-    if(s) {
+    if (s) {
       const saved = JSON.parse(s);
-      // Only override defaults if user has explicitly saved their own values
-      if(saved.domain) S.domain = saved.domain;
-      if(saved.email) S.email = saved.email;
-      if(saved.token) S.token = saved.token;
-      if(saved.projectKey) S.projectKey = saved.projectKey;
-      // Always restore these
-      if(saved.initiatives && saved.initiatives.length > 0) S.initiatives = saved.initiatives;
-      if(saved.initiativeDates) S.initiativeDates = saved.initiativeDates;
-      if(saved.fields) Object.assign(S.fields, saved.fields);
-      if(saved.lastSync) S.lastSync = saved.lastSync;
-      if(saved.data) S.data = saved.data;
-      if(saved.ganttOffsets) S.ganttOffsets = saved.ganttOffsets;
-      if(saved.ganttZoom) S.ganttZoom = saved.ganttZoom;
-      if(saved.ganttActiveEngs) S.ganttActiveEngs = saved.ganttActiveEngs;
-      if(saved.groups) S.groups = saved.groups;
+      if (saved.token)           S.token           = saved.token;
+      if (saved.initiatives && saved.initiatives.length > 0) S.initiatives = saved.initiatives;
+      if (saved.initiativeDates) S.initiativeDates  = saved.initiativeDates;
+      if (saved.fields)          Object.assign(S.fields, saved.fields);
+      if (saved.lastSync)        S.lastSync         = saved.lastSync;
+      if (saved.data)            S.data             = saved.data;
+      if (saved.ganttOffsets)    S.ganttOffsets      = saved.ganttOffsets;
+      if (saved.ganttZoom)       S.ganttZoom         = saved.ganttZoom;
+      if (saved.ganttActiveEngs) S.ganttActiveEngs   = saved.ganttActiveEngs;
+      if (saved.groups && saved.groups.length > 0) S.groups = saved.groups;
     }
-  } catch(e){}
-  if(!S.groups) S.groups = [];
+  } catch(e) {}
+  if (!S.groups) S.groups = [];
   applyToForm();
-  if(S.data && S.data.length > 0) renderDashboard();
+  if (S.data && S.data.length > 0) renderDashboard();
 }
 
 function applyToForm() {
@@ -1141,11 +1130,9 @@ function removeInitiative(k) { S.initiatives = S.initiatives.filter(i=>i!==k); d
 function renderTags() {
   const el = document.getElementById('initiativeTags');
   if (!el) return;
-  // Read-only: show tags without delete buttons
   el.innerHTML = S.initiatives.length === 0
     ? '<span style="font-size:12px;color:var(--text-3);">No initiatives configured.</span>'
     : S.initiatives.map(k=>`<span class="init-tag" style="cursor:default;">${k}</span>`).join('');
-  // Update count in header
   const countEl = document.getElementById('initiativeCount');
   if (countEl) countEl.textContent = S.initiatives.length + ' keys';
 }
@@ -1265,22 +1252,19 @@ function showMsg(id, type, msg, duration=4000) {
 
 function auth() { return 'Basic ' + btoa(S.email+':'+S.token); }
 function apiUrl(path) {
-  // Split path from any inline query string
   const qIdx = path.indexOf('?');
   const basePath = qIdx >= 0 ? path.substring(0, qIdx) : path;
   const existingQs = qIdx >= 0 ? path.substring(qIdx + 1) : '';
   const jiraPath = '/rest/api/3/' + basePath;
   const domain = (S.domain||'').replace(/^https?:\/\//, '').replace(/\/$/, '');
-  // Build URL manually so jiraPath is NOT percent-encoded by URLSearchParams
   const emailEnc = encodeURIComponent(S.email);
   const tokenEnc = encodeURIComponent(S.token);
   const domainEnc = encodeURIComponent(domain);
-  let url = `/api/jira?domain=${domainEnc}&email=${emailEnc}&token=${tokenEnc}&path=${jiraPath}`;
+  let url = '/api/jira?domain=' + domainEnc + '&email=' + emailEnc + '&token=' + tokenEnc + '&path=' + jiraPath;
   if (existingQs) url += '&' + existingQs;
   return url;
 }
 function fetchOpts() {
-  // No Authorization header needed — proxy handles it server-side
   return { headers: { Accept: 'application/json' } };
 }
 
@@ -1288,17 +1272,11 @@ async function testConnection() {
   saveSettings();
   if(!S.domain||!S.email||!S.token){ showMsg('connMsg','err','Fill in domain, email, and token first.'); return; }
   showMsg('connMsg','info','<span class="spinner"></span>Testing…', 0);
-  const url = apiUrl('myself');
   try {
-    const r = await fetch(url, fetchOpts());
-    const d = await r.json().catch(()=>({}));
-    if(r.ok){ showMsg('connMsg','ok','Connected as '+d.displayName+' ('+d.emailAddress+')'); }
-    else {
-      const detail = d.message || d.error || d.raw || JSON.stringify(d);
-      const debugUrl = d._proxyDebug ? d._proxyDebug.jiraUrl : url;
-      showMsg('connMsg','err','Error '+r.status+': '+detail+'<br><small style="word-break:break-all;opacity:0.7;">URL: '+debugUrl+'</small>');
-    }
-  } catch(e) { showMsg('connMsg','err','Network error: '+e.message+'<br><small>Proxy URL: '+url+'</small>'); }
+    const r = await fetch(apiUrl('myself'), fetchOpts());
+    if(r.ok){ const d=await r.json(); showMsg('connMsg','ok','Connected as '+d.displayName+' ('+d.emailAddress+')'); }
+    else { const e=await r.json().catch(()=>({})); showMsg('connMsg','err','Error '+r.status+': '+(e.message||'Check credentials.')); }
+  } catch(e) { showMsg('connMsg','err','Network error: '+e.message); }
 }
 
 async function fetchIssue(key) {
