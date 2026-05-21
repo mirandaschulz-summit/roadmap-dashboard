@@ -1435,7 +1435,7 @@ async function syncJira() {
             isDone,
             parentKey: c.fields.parent?.key||null,
             assignee:c.fields.assignee?.displayName||'—',
-            loe: orig > 0 ? Math.round(orig/3600*10)/10 : getLOE(c.fields),
+            loe: orig > 0 ? Math.round(orig/3600) : Math.round(getLOE(c.fields)||0),
             remaining: isDone ? 0 : (orig > 0 ? Math.round(rem/3600*10)/10 : 0),
             logged: isDone ? (orig > 0 ? Math.round(orig/3600*10)/10 : getLOE(c.fields)) : (orig > 0 ? Math.round(logged/3600*10)/10 : 0),
             dueDate:parseDate(getF(c.fields,S.fields.devBy)||c.fields.duedate)||'—',
@@ -1443,8 +1443,8 @@ async function syncJira() {
           };
       });
       // Roll up LOE and remaining from mapped children
-      const rolledLOE = Math.round(mappedChildren.reduce((a,c)=>a+c.loe,0)*10)/10;
-      const rolledRem = Math.round(mappedChildren.reduce((a,c)=>a+c.remaining,0)*10)/10;
+      const rolledLOE = Math.round(mappedChildren.reduce((a,c)=>a+c.loe,0));
+      const rolledRem = Math.round(mappedChildren.reduce((a,c)=>a+c.remaining,0));
       results.push({
         key, summary:f.summary, status:f.status?.name||'',
         priority:getF(f,S.fields.priority)?.name||f.priority?.name||'',
@@ -1766,7 +1766,7 @@ function renderProjectsTab(){
           </td>
           <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;font-size:12px;" title="${p.summary}">${p.summary}</td>
           <td><span class="badge b-purple">Initiative</span></td>
-          <td style="font-weight:600;font-size:12px;">${p.loe||'—'}</td>
+          <td style="font-weight:600;font-size:12px;">${p.loe ? Math.round(p.loe) : '—'}</td>
           <td style="font-weight:600;font-size:12px;color:${p.rem>0?'var(--text)':'var(--text-3)'}">${p.rem||'0'}</td>
           <td>${progressCell(p.loe,p.rem)}</td>
           <td style="white-space:nowrap;font-size:12px;">${shortDate(p.devBy)}</td>
@@ -1821,7 +1821,7 @@ function renderProjectsTab(){
               </td>
               <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
               <td>${typeBadge}</td>
-              <td style="font-size:12px;">${t.loe||'—'}</td>
+              <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
               <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
               <td>${tBar}</td>
               <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -1851,7 +1851,7 @@ function renderProjectsTab(){
             </td>
             <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
             <td>${typeBadge}</td>
-            <td style="font-size:12px;">${t.loe||'—'}</td>
+            <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
             <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
             <td>${tBar}</td>
             <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -1892,7 +1892,7 @@ function renderProjectsTab(){
       </td>
       <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${p.summary}">${p.summary}</td>
       <td><span class="badge b-purple">Initiative</span></td>
-      <td style="font-weight:600;">${p.loe||'—'}</td>
+      <td style="font-weight:600;">${p.loe ? Math.round(p.loe) : '—'}</td>
       <td style="font-weight:600;color:${p.rem>0?'var(--text)':'var(--text-3)'}">${p.rem||'0'}</td>
       <td>${progressCell(p.loe,p.rem)}</td>
       <td style="white-space:nowrap;font-size:12px;">${shortDate(p.devBy)}</td>
@@ -1951,7 +1951,7 @@ function renderProjectsTab(){
           </td>
           <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
           <td>${typeBadge}</td>
-          <td style="font-size:12px;">${t.loe||'—'}</td>
+          <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
           <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
           <td>${tBar}</td>
           <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -1984,7 +1984,7 @@ function renderProjectsTab(){
         </td>
         <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
         <td>${typeBadge}</td>
-        <td style="font-size:12px;">${t.loe||'—'}</td>
+        <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
         <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
         <td>${tBar}</td>
         <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -2119,7 +2119,7 @@ function renderHaltedTab(){
       </td>
       <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${p.summary}">${p.summary}</td>
       <td><span class="badge b-purple">Initiative</span></td>
-      <td style="font-weight:600;">${p.loe||'—'}</td>
+      <td style="font-weight:600;">${p.loe ? Math.round(p.loe) : '—'}</td>
       <td style="font-weight:600;color:${p.rem>0?'var(--text)':'var(--text-3)'}">${p.rem||'0'}</td>
       <td>${progressCell(p.loe,p.rem)}</td>
       <td style="white-space:nowrap;font-size:12px;">${shortDate(p.devBy)}</td>
@@ -2377,13 +2377,13 @@ function renderGanttEngineer(eng, engData, zoom, monday, totalMs, jiraBase) {
           <i class="ti ti-layout-board-split" style="color:${color};font-size:11px;flex-shrink:0;"></i>
           <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.summary}</span>
         </div>
-        <div class="gantt-row-lbl-sub">${b.rem > 0 ? b.rem+'h rem' : '<span style="color:var(--success-text)">Done</span>'} &middot; ${b.loe}h total</div>
+        <div class="gantt-row-lbl-sub">${b.rem > 0 ? b.rem+'h rem' : '<span style="color:var(--success-text)">Done</span>'} &middot; ${Math.round(b.loe)}h total</div>
       </div>
       <div class="gantt-row-tl">
         ${gridLines}
         <div class="gantt-bar"
           data-bar-key="${barKey.replace(/"/g,'&quot;')}"
-          data-loe="${b.loe}" data-rem="${b.rem}"
+          data-loe="${Math.round(b.loe)}" data-rem="${b.rem}"
           data-width-frac="${widthFrac.toFixed(4)}"
           data-tickets="${ticketData}"
           data-init-summary="${b.summary.replace(/"/g,'&quot;')}"
@@ -2451,7 +2451,7 @@ function showGanttTooltip(e, bar) {
   const extra = tickets.length - shown.length;
 
   const ticketRows = shown.map(t => {
-    const loeStr = t.loe > 0 ? `${t.loe}h` : '';
+    const loeStr = t.loe > 0 ? `${Math.round(t.loe)}h` : '';
     const s = (t.status||'').toLowerCase();
     const isReallyDone = (t.isDone && !s.includes('dev complete') && !s.includes('dev progress'))
       || s.includes('on prod') || s.includes('verified');
