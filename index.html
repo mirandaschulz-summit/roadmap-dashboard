@@ -1239,11 +1239,17 @@ async function testConnection() {
   saveSettings();
   if(!S.domain||!S.email||!S.token){ showMsg('connMsg','err','Fill in domain, email, and token first.'); return; }
   showMsg('connMsg','info','<span class="spinner"></span>Testing…', 0);
+  const url = apiUrl('myself');
   try {
-    const r = await fetch(apiUrl('myself'), fetchOpts());
-    if(r.ok){ const d=await r.json(); showMsg('connMsg','ok','Connected as '+d.displayName+' ('+d.emailAddress+')'); }
-    else { const e=await r.json().catch(()=>({})); showMsg('connMsg','err','Error '+r.status+': '+(e.message||'Check credentials.')); }
-  } catch(e) { showMsg('connMsg','err','Network error: '+e.message); }
+    const r = await fetch(url, fetchOpts());
+    const d = await r.json().catch(()=>({}));
+    if(r.ok){ showMsg('connMsg','ok','Connected as '+d.displayName+' ('+d.emailAddress+')'); }
+    else {
+      const detail = d.message || d.error || d.raw || JSON.stringify(d);
+      const debugUrl = d._proxyDebug ? d._proxyDebug.jiraUrl : url;
+      showMsg('connMsg','err','Error '+r.status+': '+detail+'<br><small style="word-break:break-all;opacity:0.7;">URL: '+debugUrl+'</small>');
+    }
+  } catch(e) { showMsg('connMsg','err','Network error: '+e.message+'<br><small>Proxy URL: '+url+'</small>'); }
 }
 
 async function fetchIssue(key) {

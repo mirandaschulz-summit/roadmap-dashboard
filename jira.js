@@ -11,10 +11,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required query params: domain, email, token, path' });
   }
 
-  // Clean domain — strip protocol and trailing slash
+  // Clean domain
   const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
-  // Rebuild any extra query params (jql, fields, maxResults, etc.) that were passed through
+  // Rebuild extra query params (jql, fields, maxResults, etc.)
   const extraParams = new URLSearchParams(rest).toString();
   const jiraUrl = `https://${cleanDomain}${path}${extraParams ? '?' + extraParams : ''}`;
 
@@ -34,7 +34,10 @@ export default async function handler(req, res) {
     let data;
     try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
-    return res.status(response.status).json(data);
+    // Always include debug info so we can see what's happening
+    const debug = { _proxyDebug: { jiraUrl, status: response.status } };
+
+    return res.status(response.status).json({ ...debug, ...( typeof data === 'object' ? data : { raw: data }) });
   } catch (err) {
     return res.status(500).json({ error: 'Proxy fetch failed', details: err.message });
   }
