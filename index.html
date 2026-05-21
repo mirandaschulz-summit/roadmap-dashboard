@@ -891,7 +891,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
   <nav class="nav-tabs" aria-label="Dashboard sections">
     <button class="nav-tab active" onclick="showTab('projects',this)"><i class="ti ti-list" aria-hidden="true"></i>Projects</button>
     <button class="nav-tab" onclick="showTab('halted',this)" id="haltedTabBtn"><i class="ti ti-player-pause" aria-hidden="true"></i>Halted<span id="haltedCount" style="display:none;background:#F5EFE7;color:#7C4A1E;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;"></span></button>
-    <button class="nav-tab" onclick="showTab('gantt',this)"><i class="ti ti-calendar-stats" aria-hidden="true"></i>Gantt</button>
+    <!-- Gantt tab hidden: <button class="nav-tab" onclick="showTab('gantt',this)"><i class="ti ti-calendar-stats" aria-hidden="true"></i>Gantt</button> -->
     <button class="nav-tab" onclick="showTab('risk',this)"><i class="ti ti-alert-triangle" aria-hidden="true"></i>Risk</button>
     <button class="nav-tab" onclick="showTab('throughput',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Throughput</button>
   </nav>
@@ -917,7 +917,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 </div>
 
 <!-- GANTT -->
-<div class="section" id="tab-gantt">
+<div class="section" id="tab-gantt" style="display:none!important;">
   <div id="ganttContent">
     <div class="empty-state"><i class="ti ti-calendar-stats" aria-hidden="true"></i><div class="empty-sub">Sync Jira data to see timeline.</div></div>
   </div>
