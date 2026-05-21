@@ -939,17 +939,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
 <!-- SETTINGS -->
 <div class="section" id="tab-settings">
+
+  <!-- ── EDITABLE: API Token ── -->
   <div class="card">
-    <div class="card-title">Jira connection</div>
-    <div class="field-group">
-      <label class="field-label" for="jiraDomain">Jira domain</label>
-      <input type="text" id="jiraDomain" placeholder="yourcompany.atlassian.net" />
-      <div class="field-hint">Just the domain — no https:// needed.</div>
-    </div>
-    <div class="field-group">
-      <label class="field-label" for="jiraEmail">Account email</label>
-      <input type="email" id="jiraEmail" placeholder="you@company.com" />
-    </div>
+    <div class="card-title">Connect to Jira</div>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Paste your personal Atlassian API token to authenticate. Everything else is pre-configured for Summit K12.</p>
     <div class="field-group">
       <label class="field-label" for="jiraToken">API token</label>
       <div class="inline-row">
@@ -960,11 +954,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
       </div>
       <div class="field-hint">Generate at <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">id.atlassian.com</a> → Security → API tokens.</div>
     </div>
-    <div class="field-group">
-      <label class="field-label" for="projectKey">Jira project key</label>
-      <input type="text" id="projectKey" placeholder="e.g. ROAD or ENG" />
-      <div class="field-hint">The short key shown before ticket numbers (e.g. ROAD-123).</div>
-    </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button onclick="testConnection()" class="btn-primary">Test connection</button>
       <button onclick="saveSettings()">Save settings</button>
@@ -973,9 +962,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     <div id="saveMsg" class="msg" style="margin-top:10px;"></div>
   </div>
 
+  <!-- ── EDITABLE: Initiatives ── -->
   <div class="card">
     <div class="card-title">Initiatives</div>
-    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Enter the Jira ticket keys for each initiative. These become the top-level roadmap items — child epics and stories are pulled automatically.</p>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">These are the top-level Jira ticket keys for the roadmap. Child epics and stories are pulled automatically.</p>
     <div class="field-group">
       <label class="field-label" for="initiativeInput">Add initiative keys</label>
       <div class="inline-row">
@@ -986,9 +976,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     <div class="tags-row" id="initiativeTags"></div>
   </div>
 
+  <!-- ── EDITABLE: Initiative Groups ── -->
   <div class="card">
     <div class="card-title">Initiative Groups <span style="font-size:11px;font-weight:500;color:var(--purple-text);background:var(--purple-bg);padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;"><i class="ti ti-folders"></i> Roll-up folders</span></div>
-    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Group multiple initiatives under one roll-up folder row in the Projects table. Great for when a single project is tracked as multiple Jira initiatives (e.g. K-1 broken into phases).</p>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Group multiple initiatives under one roll-up folder row in the Projects table.</p>
     <div id="groupsList" style="margin-bottom:14px;"></div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button onclick="addGroup()"><i class="ti ti-plus"></i> Add Group</button>
@@ -996,11 +987,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     <div id="groupsSaved" style="font-size:12px;color:var(--success);display:none;margin-top:8px;font-weight:500;"><i class="ti ti-check"></i> Groups saved</div>
   </div>
 
+  <!-- ── EDITABLE: Date overrides ── -->
   <div class="card">
     <div class="card-title">Initiative dates <span style="font-size:11px;font-weight:500;color:var(--success);background:var(--success-bg);padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;"><i class="ti ti-database"></i> Auto-synced from Jira</span></div>
     <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">
-      Dev needed-by and customer go-live dates are now pulled directly from Jira using the custom fields mapped below (<code style="font-size:12px;background:var(--bg);padding:1px 5px;border-radius:4px;">customfield_10209</code> and <code style="font-size:12px;background:var(--bg);padding:1px 5px;border-radius:4px;">customfield_11767</code>). 
-      Use the overrides below <em>only</em> if you need to set a date that differs from Jira — leave blank to use the Jira value.
+      Dates are pulled from Jira automatically. Use overrides below only if a date differs from Jira — leave blank to use the Jira value.
     </p>
     <div id="datesTableWrap">
       <span style="font-size:12px;color:var(--text-3);">Add initiative keys above to set date overrides.</span>
@@ -1011,29 +1002,48 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     </div>
   </div>
 
+  <!-- ── READ-ONLY: Pre-configured settings ── -->
   <div class="card">
-    <div class="card-title">Custom field mapping</div>
-    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Map your Jira custom fields to dashboard columns. Use the field IDs (e.g. <code style="font-family:'DM Mono',monospace;font-size:12px;background:var(--bg);padding:1px 5px;border-radius:4px;">customfield_10015</code>). Leave blank to skip.</p>
-    <div class="two-col">
-      <div class="field-group">
-        <label class="field-label" for="fieldDevBy">Dev need-by date</label>
-        <input type="text" id="fieldDevBy" placeholder="customfield_10015" />
+    <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+      <span>Pre-configured settings</span>
+      <span style="font-size:11px;font-weight:500;color:var(--text-3);background:var(--bg);border:1px solid var(--border);padding:2px 9px;border-radius:10px;">read-only</span>
+    </div>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">These values are hardcoded for Summit K12 and shared across all users. Contact your dashboard admin to change them.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Jira Domain</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text);">summitk12.atlassian.net</div>
       </div>
-      <div class="field-group">
-        <label class="field-label" for="fieldRelease">Customer release date</label>
-        <input type="text" id="fieldRelease" placeholder="customfield_10020" />
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Account Email</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text);">miranda.schulz@summitk12.com</div>
       </div>
-      <div class="field-group">
-        <label class="field-label" for="fieldLOE">LOE / story points</label>
-        <input type="text" id="fieldLOE" placeholder="story_points" />
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Project Key</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text);">LMS</div>
       </div>
-      <div class="field-group">
-        <label class="field-label" for="fieldPriority">Business priority</label>
-        <input type="text" id="fieldPriority" placeholder="priority" />
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Custom Fields</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.7;">
+          Dev by: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">customfield_10209</code><br>
+          Release: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">customfield_11767</code><br>
+          LOE: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">story_points</code><br>
+          Priority: <code style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;">priority</code>
+        </div>
       </div>
     </div>
-    <button onclick="saveSettings()">Save field mapping</button>
+    <!-- Hidden inputs kept for JS compatibility -->
+    <div style="display:none;">
+      <input type="text" id="jiraDomain" />
+      <input type="email" id="jiraEmail" />
+      <input type="text" id="projectKey" />
+      <input type="text" id="fieldDevBy" />
+      <input type="text" id="fieldRelease" />
+      <input type="text" id="fieldLOE" />
+      <input type="text" id="fieldPriority" />
+    </div>
   </div>
+
 </div>
 
 </div><!-- page-content -->
