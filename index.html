@@ -962,29 +962,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     <div id="saveMsg" class="msg" style="margin-top:10px;"></div>
   </div>
 
-  <!-- ── EDITABLE: Initiatives ── -->
-  <div class="card">
-    <div class="card-title">Initiatives</div>
-    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">These are the top-level Jira ticket keys for the roadmap. Child epics and stories are pulled automatically.</p>
-    <div class="field-group">
-      <label class="field-label" for="initiativeInput">Add initiative keys</label>
-      <div class="inline-row">
-        <input type="text" id="initiativeInput" placeholder="ROAD-1, ROAD-2, ROAD-5 — comma separated" onkeydown="if(event.key==='Enter')addInitiatives()" />
-        <button onclick="addInitiatives()" style="flex-shrink:0;">Add</button>
-      </div>
-    </div>
-    <div class="tags-row" id="initiativeTags"></div>
-  </div>
-
-  <!-- ── EDITABLE: Initiative Groups ── -->
-  <div class="card">
-    <div class="card-title">Initiative Groups <span style="font-size:11px;font-weight:500;color:var(--purple-text);background:var(--purple-bg);padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;"><i class="ti ti-folders"></i> Roll-up folders</span></div>
-    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Group multiple initiatives under one roll-up folder row in the Projects table.</p>
-    <div id="groupsList" style="margin-bottom:14px;"></div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <button onclick="addGroup()"><i class="ti ti-plus"></i> Add Group</button>
-    </div>
-    <div id="groupsSaved" style="font-size:12px;color:var(--success);display:none;margin-top:8px;font-weight:500;"><i class="ti ti-check"></i> Groups saved</div>
+  <!-- hidden input kept for JS compat -->
+  <div style="display:none;">
+    <input type="text" id="initiativeInput" />
   </div>
 
   <!-- ── EDITABLE: Date overrides ── -->
@@ -1021,6 +1001,15 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
         <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Project Key</div>
         <div style="font-size:13px;font-weight:500;color:var(--text);">LMS</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;grid-column:span 2;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Initiatives — <span id="initiativeCount">40 keys</span></div>
+        <div id="initiativeTags" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;grid-column:span 2;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Initiative Groups</div>
+        <div id="groupsList"></div>
+        <div id="groupsSaved" style="display:none;"></div>
       </div>
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
         <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Custom Fields</div>
@@ -1151,9 +1140,14 @@ function removeInitiative(k) { S.initiatives = S.initiatives.filter(i=>i!==k); d
 
 function renderTags() {
   const el = document.getElementById('initiativeTags');
+  if (!el) return;
+  // Read-only: show tags without delete buttons
   el.innerHTML = S.initiatives.length === 0
-    ? '<span style="font-size:12px;color:var(--text-3);">No initiatives added yet.</span>'
-    : S.initiatives.map(k=>`<span class="init-tag">${k}<button onclick="removeInitiative('${k}')" aria-label="Remove ${k}">×</button></span>`).join('');
+    ? '<span style="font-size:12px;color:var(--text-3);">No initiatives configured.</span>'
+    : S.initiatives.map(k=>`<span class="init-tag" style="cursor:default;">${k}</span>`).join('');
+  // Update count in header
+  const countEl = document.getElementById('initiativeCount');
+  if (countEl) countEl.textContent = S.initiatives.length + ' keys';
 }
 
 function toggleToken() { const el=document.getElementById('jiraToken'); el.type=el.type==='password'?'text':'password'; }
