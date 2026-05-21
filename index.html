@@ -894,6 +894,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     <!-- Gantt tab hidden: <button class="nav-tab" onclick="showTab('gantt',this)"><i class="ti ti-calendar-stats" aria-hidden="true"></i>Gantt</button> -->
     <button class="nav-tab" onclick="showTab('risk',this)"><i class="ti ti-alert-triangle" aria-hidden="true"></i>Risk</button>
     <button class="nav-tab" onclick="showTab('throughput',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Throughput</button>
+    <button class="nav-tab" onclick="showTab('pipeline',this)"><i class="ti ti-users" aria-hidden="true"></i>Pipeline</button>
   </nav>
 </div>
 
@@ -934,6 +935,13 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 <div class="section" id="tab-throughput">
   <div id="throughputContent">
     <div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><div class="empty-sub">Sync Jira data to see engineer throughput.</div></div>
+  </div>
+</div>
+
+<!-- PIPELINE -->
+<div class="section" id="tab-pipeline">
+  <div id="pipelineContent">
+    <div class="empty-state"><i class="ti ti-users" aria-hidden="true"></i><div class="empty-sub">Sync Jira data to see engineer pipeline.</div></div>
   </div>
 </div>
 
@@ -1494,7 +1502,7 @@ function progressCell(loe,rem){
 
 function renderDashboard(){
   const d=S.data; if(!d.length) return;
-  renderProjectsTab(); renderHaltedTab(); renderGanttTab(); renderRiskTab(); renderThroughputTab();
+  renderProjectsTab(); renderHaltedTab(); renderGanttTab(); renderRiskTab(); renderThroughputTab(); renderPipelineTab();
 }
 
 function sortProjects(col) {
@@ -2844,6 +2852,338 @@ function goToRisk(key, level) {
     }
   }, 150);
 }
+
+
+// ── Pipeline tab state ────────────────────────────────────────────────────
+let pipelineFilter = [];   // [] = show all
+
+function renderPipelineTab() {
+  const el = document.getElementById('pipelineContent');
+  if (!el) return;
+  const d = S.data;
+  if (!d.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-users"></i><div class="empty-sub">Sync Jira data to see engineer pipeline.</div></div>';
+    return;
+  }
+
+  const engMap = buildEngMap(d);
+  const now    = new Date(); now.setHours(0,0,0,0);
+  const domain = (S.domain||'').replace(/^https?:\/\//, '').replace(/\/$/, '') || 'summitk12.atlassian.net';
+  const jiraBase = 'https://' + domain;
+
+  // Build sorted engineer list
+  const allEngineers = Object.entries(engMap).map(([name, eng]) => {
+    const inits    = Object.values(eng.initMap).sort((a, b) => {
+      const da = d.find(p => p.key === a.initKey);
+      const db = d.find(p => p.key === b.initKey);
+      const ta = da && da.devBy && da.devBy !== '—' ? new Date(da.devBy).getTime() : Infinity;
+      const tb = db && db.devBy && db.devBy !== '—' ? new Date(db.devBy).getTime() : Infinity;
+      return ta - tb;
+    });
+    const totalRem = Math.round(inits.reduce((a,b) => a+b.rem, 0));
+    const totalLoe = Math.round(inits.reduce((a,b) => a+b.loe, 0));
+    const pctRem   = totalLoe > 0 ? Math.min(100, Math.round((totalRem/totalLoe)*100)) : 0;
+
+    const deadlines = inits.map(b => {
+      const init = d.find(p => p.key === b.initKey);
+      return init && init.devBy && init.devBy !== '—'
+        ? { key: b.initKey, date: init.devBy, daysLeft: Math.ceil((new Date(init.devBy)-now)/86400000) }
+        : null;
+    }).filter(Boolean).sort((a,b) => a.daysLeft-b.daysLeft);
+
+    const nextDeadline = deadlines[0] || null;
+    const overdueCount = deadlines.filter(x => x.daysLeft < 0).length;
+    let risk = 'green';
+    if (overdueCount > 0 || pctRem > 90) risk = 'red';
+    else if (pctRem > 65 || (nextDeadline && nextDeadline.daysLeft <= 14)) risk = 'amber';
+
+    return { name, color: eng.color, inits, totalRem, totalLoe, pctRem, nextDeadline, overdueCount, risk };
+  }).sort((a,b) => ({ red:0, amber:1, green:2 })[a.risk]-({ red:0, amber:1, green:2 })[b.risk]);
+
+  // Apply filter
+  const visible = pipelineFilter.length === 0
+    ? allEngineers
+    : allEngineers.filter(e => pipelineFilter.includes(e.name));
+
+  // Helpers
+  const riskBg    = r => r==='red'?'var(--danger-bg)':r==='amber'?'var(--warning-bg)':'var(--success-bg)';
+  const riskTxt   = r => r==='red'?'var(--danger-text)':r==='amber'?'var(--warning-text)':'var(--success-text)';
+  const riskLabel = r => r==='red'?'Critical':r==='amber'?'At risk':'On track';
+  const riskIcon  = r => r==='red'?'ti-flame':r==='amber'?'ti-alert-triangle':'ti-check';
+  const barCol    = p => p>90?'var(--danger)':p>65?'var(--warning)':'var(--success)';
+  const initials  = n => n.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const fmtD      = s => new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const statusCol = s => {
+    const sl=(s||'').toLowerCase();
+    if(sl.includes('done')||sl.includes('closed')||sl.includes('resolved')||sl.includes('verified')||sl.includes('on prod')) return 'var(--success)';
+    if(sl.includes('progress')) return 'var(--primary)';
+    return 'var(--text-3)';
+  };
+
+  let html = '';
+
+  // ── People filter — rendered via DOM after innerHTML set ─────────────────
+  const crit   = allEngineers.filter(e=>e.risk==='red').length;
+  const atRisk = allEngineers.filter(e=>e.risk==='amber').length;
+
+  html += '<div id="pipelineFilterBar" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;"></div>';
+
+  // ── Cards — 4 per row ─────────────────────────────────────────────────────
+  html += '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;">';
+
+  visible.forEach(e => {
+    const cardBorder = e.risk==='red'?'1.5px solid var(--danger)':e.risk==='amber'?'1.5px solid var(--warning)':'1px solid var(--border)';
+    const uid = 'pipe-' + e.name.replace(/\s+/g,'_');
+    html += '<div style="background:var(--surface);border:'+cardBorder+';border-radius:var(--radius-lg);padding:14px;display:flex;flex-direction:column;gap:0;">';
+
+    // ── Card header ───────────────────────────────────────────────────────
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+    html += '<div style="width:32px;height:32px;border-radius:50%;background:'+e.color+'22;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:'+e.color+';flex-shrink:0;">'+initials(e.name)+'</div>';
+    html += '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+e.name+'</div>';
+    html += '<div style="font-size:11px;color:var(--text-3);">'+e.inits.length+' initiative'+(e.inits.length!==1?'s':'')+' · '+e.totalRem+'h left</div></div>';
+    html += '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:'+riskBg(e.risk)+';color:'+riskTxt(e.risk)+';white-space:nowrap;flex-shrink:0;">';
+    html += '<i class="ti '+riskIcon(e.risk)+'" style="font-size:9px;margin-right:2px;" aria-hidden="true"></i>'+riskLabel(e.risk)+'</span>';
+    html += '</div>';
+
+    // ── Progress bar ─────────────────────────────────────────────────────
+    html += '<div style="margin-bottom:10px;">';
+    html += '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">';
+    html += '<span style="color:var(--text-3);">Work remaining</span>';
+    html += '<span style="font-weight:700;color:'+barCol(e.pctRem)+';">'+e.pctRem+'% of estimate</span></div>';
+    html += '<div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">';
+    html += '<div style="height:100%;border-radius:99px;background:'+barCol(e.pctRem)+';width:'+e.pctRem+'%;transition:width .4s;"></div></div></div>';
+
+    // ── Next deadline ─────────────────────────────────────────────────────
+    if (e.nextDeadline) {
+      const dl = e.nextDeadline;
+      const dlC = dl.daysLeft<0?'var(--danger)':dl.daysLeft<=7?'var(--danger)':dl.daysLeft<=14?'var(--warning)':'var(--text-3)';
+      const dlL = dl.daysLeft<0?Math.abs(dl.daysLeft)+'d overdue':dl.daysLeft===0?'today':dl.daysLeft+'d left';
+      html += '<div style="font-size:11px;color:var(--text-2);margin-bottom:10px;display:flex;align-items:center;gap:5px;">';
+      html += '<i class="ti ti-calendar" style="font-size:11px;color:'+dlC+';flex-shrink:0;" aria-hidden="true"></i>';
+      html += '<span>Next: <strong style="color:'+dlC+';">'+fmtD(dl.date)+'</strong> <span style="color:'+dlC+';">('+dlL+')</span></span></div>';
+    }
+
+    // ── Initiatives with expandable tickets ───────────────────────────────
+    html += '<div style="display:flex;flex-direction:column;gap:4px;">';
+
+    e.inits.forEach((init, ii) => {
+      const initInit = d.find(p => p.key === init.initKey);
+      const devByDate = initInit && initInit.devBy && initInit.devBy !== '—' ? initInit.devBy : null;
+      const daysLeft  = devByDate ? Math.ceil((new Date(devByDate)-now)/86400000) : null;
+      const dateC     = daysLeft!==null&&daysLeft<0?'var(--danger)':daysLeft!==null&&daysLeft<=14?'var(--warning)':'var(--text-3)';
+      const initPct   = init.loe>0 ? Math.min(100,Math.round(((init.loe-init.rem)/init.loe)*100)) : 0;
+      const expandId  = uid + '-init-' + ii;
+
+      // Get tickets for this engineer on this initiative
+      const myTickets = (initInit ? (initInit.children||[]) : []).filter(c => {
+        const isEpic = (c.type||'').toLowerCase().includes('epic');
+        return !isEpic && (c.assignee===e.name);
+      });
+
+      html += '<div style="border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);">';
+
+      // Initiative header row (clickable to expand)
+      html += '<div style="display:flex;align-items:center;gap:6px;padding:5px 7px;background:var(--surface-2);cursor:'+(myTickets.length?'pointer':'default')+'" '
+        + (myTickets.length ? 'onclick="togglePipelineInit(\'' + expandId + '\')" ' : '')
+        + '>';
+      if (myTickets.length) {
+        html += '<span id="chevron-'+expandId+'" style="font-size:10px;color:var(--text-3);transition:transform .2s;flex-shrink:0;line-height:1;">▶</span>';
+      } else {
+        html += '<span style="width:10px;flex-shrink:0;"></span>';
+      }
+      html += '<div style="width:5px;height:5px;border-radius:50%;background:'+e.color+';flex-shrink:0;"></div>';
+      html += '<a href="'+jiraBase+'/browse/'+init.initKey+'" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;font-weight:700;color:var(--primary);flex-shrink:0;">'+init.initKey+'</a>';
+      html += '<div style="flex:1;min-width:0;font-size:11px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="'+init.summary+'">'+init.summary+'</div>';
+      html += '<div style="text-align:right;flex-shrink:0;">';
+      html += '<div style="font-size:11px;font-weight:600;color:var(--text);">'+init.rem+'h</div>';
+      if (devByDate) html += '<div style="font-size:10px;color:'+dateC+';">'+fmtD(devByDate)+'</div>';
+      html += '</div></div>';
+
+      // Expandable tickets
+      if (myTickets.length) {
+        html += '<div id="'+expandId+'" style="display:none;max-height:280px;overflow-y:auto;">';
+        myTickets.forEach(t => {
+          const tPct = t.loe>0 ? Math.min(100,Math.round(((t.loe-(t.remaining||0))/t.loe)*100)) : 0;
+          html += '<div style="display:flex;align-items:flex-start;gap:6px;padding:5px 7px 5px 22px;border-top:1px solid var(--border);background:var(--surface);">';
+          html += '<div style="width:6px;height:6px;border-radius:50%;margin-top:3px;flex-shrink:0;background:'+statusCol(t.status)+';"></div>';
+          html += '<div style="flex:1;min-width:0;">';
+          html += '<a href="'+jiraBase+'/browse/'+t.key+'" target="_blank" style="font-size:10px;font-weight:700;color:var(--primary);display:block;">'+t.key+'</a>';
+          html += '<div style="font-size:10px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="'+t.summary+'">'+t.summary+'</div>';
+          html += '<div style="font-size:10px;color:var(--text-3);">'+t.status+'</div>';
+          html += '</div>';
+          html += '<div style="text-align:right;flex-shrink:0;font-size:10px;">';
+          html += '<div style="font-weight:600;color:var(--text);">'+(t.remaining||0)+'h left</div>';
+          html += '<div style="color:var(--text-3);">'+tPct+'% done</div>';
+          html += '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+
+    html += '</div>';
+    html += '</div>';
+  });
+
+  html += '</div>';
+  el.innerHTML = html;
+  buildPipelineFilter(allEngineers, crit, atRisk);
+}
+
+function buildPipelineFilter(allEngineers, crit, atRisk) {
+  const bar = document.getElementById('pipelineFilterBar');
+  if (!bar) return;
+  bar.innerHTML = '';
+
+  // Dropdown wrapper
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;display:inline-block;';
+
+  // Button
+  const selCount = pipelineFilter.length;
+  const label = selCount === 0 ? 'All engineers (' + allEngineers.length + ')' : selCount + ' engineer' + (selCount!==1?'s':'') + ' selected';
+  const btn = document.createElement('button');
+  btn.style.cssText = 'font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;min-width:200px;justify-content:space-between;';
+  btn.innerHTML = '<span style="display:flex;align-items:center;gap:6px;"><i class="ti ti-users" style="font-size:13px;color:var(--text-3);"></i>' + label + '</span><i class="ti ti-chevron-down" style="font-size:12px;color:var(--text-3);transition:transform .15s;" id="pipelineDropChv"></i>';
+
+  // Panel
+  const panel = document.createElement('div');
+  panel.id = 'pipelineDropPanel';
+  panel.style.cssText = 'display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:200;background:var(--surface);border:1.5px solid var(--border-mid);border-radius:var(--radius-lg);box-shadow:var(--shadow);min-width:240px;max-height:320px;overflow-y:auto;padding:6px;';
+
+  // Clear button
+  const clearRow = document.createElement('div');
+  clearRow.style.cssText = 'padding:4px 4px 8px;border-bottom:1px solid var(--border);margin-bottom:6px;';
+  const clearBtn = document.createElement('button');
+  clearBtn.style.cssText = 'font-size:11px;padding:3px 8px;border-radius:var(--radius-sm);';
+  clearBtn.textContent = 'Show all';
+  clearBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    pipelineFilter = [];
+    renderPipelineTab();
+  });
+  clearRow.appendChild(clearBtn);
+  panel.appendChild(clearRow);
+
+  // Engineer rows
+  allEngineers.forEach(function(eng) {
+    const row = document.createElement('div');
+    const checked = pipelineFilter.includes(eng.name);
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text);user-select:none;background:' + (checked ? 'var(--primary-bg)' : 'transparent') + ';';
+
+    // Checkbox square
+    const box = document.createElement('div');
+    box.style.cssText = 'width:14px;height:14px;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1.5px solid ' + (checked ? 'var(--primary)' : 'var(--border-mid)') + ';background:' + (checked ? 'var(--primary)' : 'transparent') + ';';
+    if (checked) { const chk = document.createElement('i'); chk.className = 'ti ti-check'; chk.style.cssText = 'font-size:9px;color:#fff;'; box.appendChild(chk); }
+
+    // Color dot
+    const dot = document.createElement('span');
+    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + eng.color + ';flex-shrink:0;';
+
+    // Name
+    const name = document.createElement('span');
+    name.style.cssText = 'flex:1;';
+    name.textContent = eng.name;
+
+    row.appendChild(box);
+    row.appendChild(dot);
+    row.appendChild(name);
+
+    // Risk dot
+    if (eng.risk !== 'green') {
+      const rdot = document.createElement('span');
+      const rc = eng.risk === 'red' ? 'var(--danger)' : 'var(--warning)';
+      rdot.style.cssText = 'width:6px;height:6px;border-radius:50%;background:' + rc + ';flex-shrink:0;';
+      row.appendChild(rdot);
+    }
+
+    row.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const idx = pipelineFilter.indexOf(eng.name);
+      if (idx >= 0) pipelineFilter.splice(idx, 1);
+      else pipelineFilter.push(eng.name);
+      renderPipelineTab();
+      // Reopen dropdown
+      requestAnimationFrame(function() {
+        const p = document.getElementById('pipelineDropPanel');
+        const c = document.getElementById('pipelineDropChv');
+        if (p) p.style.display = 'block';
+        if (c) c.style.transform = 'rotate(180deg)';
+      });
+    });
+
+    panel.appendChild(row);
+  });
+
+  // Toggle open/close
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    const chv = document.getElementById('pipelineDropChv');
+    if (chv) chv.style.transform = isOpen ? '' : 'rotate(180deg)';
+    if (!isOpen) {
+      setTimeout(function() {
+        document.addEventListener('click', function handler(ev) {
+          if (!panel.contains(ev.target) && !btn.contains(ev.target)) {
+            panel.style.display = 'none';
+            if (chv) chv.style.transform = '';
+            document.removeEventListener('click', handler);
+          }
+        });
+      }, 10);
+    }
+  });
+
+  wrap.appendChild(btn);
+  wrap.appendChild(panel);
+  bar.appendChild(wrap);
+
+  // Selected tags
+  if (pipelineFilter.length > 0) {
+    const tagsWrap = document.createElement('div');
+    tagsWrap.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;align-items:center;';
+    pipelineFilter.forEach(function(n) {
+      const eng = allEngineers.find(function(e){ return e.name===n; });
+      const col = eng ? eng.color : 'var(--primary)';
+      const tag = document.createElement('span');
+      tag.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:' + col + '22;color:var(--text);border:1px solid ' + col + '44;';
+      tag.textContent = n.split(' ')[0] + ' ';
+      const x = document.createElement('button');
+      x.style.cssText = 'font-size:11px;padding:0;border:none;background:transparent;color:var(--text-3);line-height:1;cursor:pointer;';
+      x.textContent = '×';
+      x.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const i = pipelineFilter.indexOf(n);
+        if (i >= 0) pipelineFilter.splice(i, 1);
+        renderPipelineTab();
+      });
+      tag.appendChild(x);
+      tagsWrap.appendChild(tag);
+    });
+    bar.appendChild(tagsWrap);
+  }
+
+  // Summary badges
+  const badges = document.createElement('span');
+  badges.style.cssText = 'margin-left:auto;display:flex;gap:8px;align-items:center;';
+  if (crit)   badges.innerHTML += '<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--danger-bg);color:var(--danger-text);"><i class="ti ti-flame" style="font-size:10px;"></i> '+crit+' critical</span>';
+  if (atRisk) badges.innerHTML += '<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--warning-bg);color:var(--warning-text);"><i class="ti ti-alert-triangle" style="font-size:10px;"></i> '+atRisk+' at risk</span>';
+  bar.appendChild(badges);
+}
+
+// togglePipelineFilter and togglePipelineDropdown now handled inside buildPipelineFilter
+
+function togglePipelineInit(id) {
+  const el  = document.getElementById(id);
+  const chv = document.getElementById('chevron-' + id);
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (chv) chv.style.transform = open ? '' : 'rotate(90deg)';
+}
+
 
 function renderThroughputTab() {
   const d = S.data;
