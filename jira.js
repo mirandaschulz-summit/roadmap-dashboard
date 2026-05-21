@@ -16,7 +16,7 @@ export default async function handler(req, res) {
 
   // Rebuild extra query params (jql, fields, maxResults, etc.)
   const extraParams = new URLSearchParams(rest).toString();
-  const jiraUrl = `https://${cleanDomain}${path}${extraParams ? '?' + extraParams : ''}`;
+  const jiraUrl = `https://${cleanDomain}${decodeURIComponent(path)}${extraParams ? '?' + extraParams : ''}`;
 
   const credentials = Buffer.from(`${email}:${token}`).toString('base64');
 
