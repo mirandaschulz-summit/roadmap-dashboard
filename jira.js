@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -11,12 +11,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required query params: domain, email, token, path' });
   }
 
-  // Clean domain
   const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-
-  // Rebuild extra query params (jql, fields, maxResults, etc.)
+  const cleanPath = decodeURIComponent(path);
   const extraParams = new URLSearchParams(rest).toString();
-  const jiraUrl = `https://${cleanDomain}${decodeURIComponent(path)}${extraParams ? '?' + extraParams : ''}`;
+  const jiraUrl = `https://${cleanDomain}${cleanPath}${extraParams ? '?' + extraParams : ''}`;
 
   const credentials = Buffer.from(`${email}:${token}`).toString('base64');
 
@@ -26,7 +24,6 @@ export default async function handler(req, res) {
       headers: {
         'Authorization': `Basic ${credentials}`,
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
       },
     });
 
@@ -34,11 +31,8 @@ export default async function handler(req, res) {
     let data;
     try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
-    // Always include debug info so we can see what's happening
-    const debug = { _proxyDebug: { jiraUrl, status: response.status } };
-
-    return res.status(response.status).json({ ...debug, ...( typeof data === 'object' ? data : { raw: data }) });
+    return res.status(response.status).json(data);
   } catch (err) {
-    return res.status(500).json({ error: 'Proxy fetch failed', details: err.message });
+    return res.status(500).json({ error: 'Proxy fetch failed', details: err.message, jiraUrl });
   }
 }
