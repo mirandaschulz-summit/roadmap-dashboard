@@ -1214,13 +1214,19 @@ function showMsg(id, type, msg, duration=4000) {
 
 function auth() { return 'Basic ' + btoa(S.email+':'+S.token); }
 function apiUrl(path) {
-  const isProxy = S.domain.includes('localhost');
-  return isProxy
-    ? 'http://' + S.domain + '/rest/api/3/' + path
-    : 'https://' + S.domain + '/rest/api/3/' + path;
+  // Always route through the /api/jira proxy to avoid CORS issues
+  const jiraPath = '/rest/api/3/' + path;
+  const params = new URLSearchParams({
+    domain: S.domain,
+    email: S.email,
+    token: S.token,
+    path: jiraPath
+  });
+  return '/api/jira?' + params.toString();
 }
 function fetchOpts() {
-  return { headers: { Authorization: auth(), Accept: 'application/json', 'X-Auth': auth() } };
+  // No Authorization header needed — proxy handles it server-side
+  return { headers: { Accept: 'application/json' } };
 }
 
 async function testConnection() {
