@@ -1,0 +1,3052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jira Roadmap Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg: #F2F2F7;
+  --surface: #FFFFFF;
+  --surface-2: #F8F8FC;
+  --border: #E4E4EE;
+  --border-mid: #CCCEDD;
+  --text: #171717;
+  --text-2: #555570;
+  --text-3: #9999B0;
+  --primary: #1C51E1;
+  --primary-hover: #1640B1;
+  --primary-disabled: #A4BAF4;
+  --primary-bg: #E5EAF9;
+  --secondary-hover: #E5EAF9;
+  --success: #1D9E75;
+  --success-bg: #E6F4EF;
+  --success-text: #156647;
+  --warning: #D97706;
+  --warning-bg: #FEF3C7;
+  --warning-text: #92400E;
+  --danger: #DC2626;
+  --danger-bg: #FEE2E2;
+  --danger-text: #991B1B;
+  --info: #1C51E1;
+  --info-bg: #EEF2FD;
+  --info-text: #1C51E1;
+  --purple-bg: #F0EEFF;
+  --purple-text: #5B3FD4;
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --shadow-sm: 0 1px 3px rgba(28,81,225,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 4px 12px rgba(28,81,225,0.08), 0 1px 3px rgba(0,0,0,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  font-family: 'Lexend', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Layout ── */
+.shell { max-width: 100%; margin: 0 auto; padding: 0 16px 60px; }
+
+/* ── Top header bar ── */
+.top-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+.top-bar-inner {
+  max-width: 100%; margin: 0 auto; padding: 0 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 34px; height: 34px;
+  background: var(--primary);
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(28,81,225,0.3);
+}
+.logo-mark svg { width: 18px; height: 18px; fill: white; }
+.logo-name { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+.logo-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; font-weight: 400; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+#lastSync { font-size: 11px; color: var(--text-3); font-weight: 400; }
+
+/* ── Nav tabs (Summit K12 underline style) ── */
+.nav-tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0 16px;
+  max-width: 100%; margin: 0 auto;
+}
+.nav-tab {
+  padding: 14px 18px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none;
+  background: transparent;
+  color: var(--text-3);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-family: 'Lexend', sans-serif;
+  display: flex; align-items: center; gap: 7px;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0;
+}
+.nav-tab:hover { color: var(--primary); }
+.nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.nav-tab i { font-size: 15px; }
+
+/* ── Page content ── */
+.page-content { padding-top: 24px; }
+
+/* ── Buttons ── */
+button {
+  font-family: 'Lexend', sans-serif;
+  cursor: pointer;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border-mid);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px; font-weight: 500;
+  padding: 8px 16px;
+  transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+  line-height: 1;
+}
+button:hover { background: var(--secondary-hover); border-color: var(--primary); color: var(--primary); }
+button:active { opacity: 0.85; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--primary); color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(28,81,225,0.25);
+}
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
+
+/* ── Inputs / selects ── */
+input, select, textarea {
+  font-family: 'Lexend', sans-serif;
+  font-size: 13px; font-weight: 400;
+  color: var(--text);
+  background: var(--surface);
+  border: 1.5px solid var(--border-mid);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  width: 100%; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(28,81,225,0.1);
+}
+input::placeholder { color: var(--text-3); }
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239999B0' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.card-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--text); letter-spacing: -0.01em; }
+
+/* ── Metrics ── */
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.metric {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s;
+}
+.metric:hover { box-shadow: var(--shadow); }
+.metric-label {
+  font-size: 11px; font-weight: 500;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+.metric-value { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; letter-spacing: -0.02em; }
+.metric-sub { font-size: 11px; color: var(--text-3); margin-top: 5px; font-weight: 400; }
+
+/* ── Table ── */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  background: var(--surface);
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+/* In fixed-layout tables, max-width:0 on a td lets it truncate within the col width */
+table td, table th { overflow: hidden; }
+th {
+  text-align: left; padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-3); font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  white-space: nowrap;
+  background: var(--surface-2);
+}
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text); vertical-align: middle;
+  font-weight: 400;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--surface-2); }
+
+/* ── Badges / Tags (Summit K12 pill style) ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  white-space: nowrap; letter-spacing: 0.02em;
+}
+.badge::before {
+  content: ''; width: 6px; height: 6px;
+  border-radius: 50%; flex-shrink: 0;
+}
+.b-green { background: var(--success-bg); color: var(--success-text); }
+.b-green::before { background: var(--success); }
+.b-blue { background: var(--info-bg); color: var(--info-text); }
+.b-blue::before { background: var(--primary); }
+.b-amber { background: var(--warning-bg); color: var(--warning-text); }
+.b-amber::before { background: var(--warning); }
+.b-red { background: var(--danger-bg); color: var(--danger-text); }
+.b-red::before { background: var(--danger); }
+.b-gray { background: var(--bg); color: var(--text-2); border: 1px solid var(--border); }
+.b-gray::before { background: var(--text-3); }
+.b-purple { background: var(--purple-bg); color: var(--purple-text); }
+.b-purple::before { background: var(--purple-text); }
+.b-halted { background: #F5EFE7; color: #7C4A1E; }
+.b-halted::before { background: #9A5C2A; }
+
+/* ── Progress bar ── */
+.progress-bar {
+  height: 7px; background: var(--border);
+  border-radius: 10px; overflow: hidden; min-width: 40px;
+}
+.progress-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+
+/* ── Filter row ── */
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-row input, .filter-row select { width: auto; }
+
+/* ── Status messages ── */
+.msg {
+  padding: 11px 16px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 500;
+  margin-bottom: 14px; display: none;
+  border-left: 3px solid transparent;
+}
+.msg-ok { background: var(--success-bg); color: var(--success-text); border-left-color: var(--success); }
+.msg-err { background: var(--danger-bg); color: var(--danger-text); border-left-color: var(--danger); }
+.msg-info { background: var(--info-bg); color: var(--info-text); border-left-color: var(--primary); }
+
+/* ── Initiative tags ── */
+.tags-row { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; align-items: center; }
+.init-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary-bg); color: var(--primary);
+  border: 1.5px solid rgba(28,81,225,0.2);
+  border-radius: 20px; padding: 4px 10px 4px 12px;
+  font-size: 12px; font-weight: 600;
+  font-family: 'Lexend', monospace;
+}
+.init-tag button {
+  border: none; background: transparent; color: rgba(28,81,225,0.5);
+  font-size: 16px; line-height: 1; padding: 0; cursor: pointer;
+  border-radius: 0; font-weight: 400;
+}
+.init-tag button:hover { color: var(--danger); background: transparent; border-color: transparent; }
+
+/* ── Gantt v3 ── */
+.gantt-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+/* Top toolbar */
+.gantt-toolbar {
+  display: flex; flex-direction: column;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+.gantt-toolbar-row1 {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 40;
+  background: var(--surface);
+}
+.gantt-toolbar-row1-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+.gantt-toolbar-row1-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.gantt-toolbar-row2 {
+  padding: 8px 14px;
+  display: flex; align-items: center; gap: 6px;
+  flex-wrap: wrap; min-height: 42px;
+  position: relative; z-index: 1;
+}
+
+/* Multi-select trigger (compact) */
+.gantt-multiselect { position: relative; z-index: 200; }
+.gantt-ms-trigger {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 11px;
+  background: var(--surface); border: 1.5px solid var(--border-mid);
+  border-radius: var(--radius); cursor: pointer;
+  font-size: 12px; font-weight: 500; color: var(--text);
+  user-select: none; transition: border-color .15s; white-space: nowrap;
+}
+.gantt-ms-trigger:hover { border-color: var(--primary); }
+.gantt-ms-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0;
+  background: var(--surface); border: 1.5px solid var(--border-mid);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  min-width: 240px; max-width: 300px; overflow: hidden; z-index: 300;
+}
+.gantt-ms-search-wrap { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.gantt-ms-search { padding: 6px 10px; font-size: 12px; width: 100%; border-radius: var(--radius); }
+.gantt-ms-options { max-height: 240px; overflow-y: auto; padding: 4px 0; }
+.gantt-ms-options::-webkit-scrollbar { width: 4px; }
+.gantt-ms-options::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 4px; }
+.gantt-ms-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; cursor: pointer; font-size: 12px; color: var(--text); transition: background .1s;
+}
+.gantt-ms-option:hover { background: var(--secondary-hover); }
+.gantt-ms-option input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+.gantt-ms-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.gantt-ms-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gantt-ms-footer { display: flex; gap: 6px; padding: 7px 10px; border-top: 1px solid var(--border); background: var(--surface-2); }
+
+/* People pill strip — full width row */
+.gantt-people-strip {
+  display: contents; /* children flow directly into toolbar-row2 flex */
+}
+.gantt-person-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px 4px 7px;
+  border-radius: 20px; border: 1.5px solid transparent;
+  font-size: 11px; font-weight: 500; color: var(--text-2);
+  cursor: pointer; background: var(--surface-2);
+  transition: all .15s; user-select: none; white-space: nowrap;
+}
+.gantt-person-pill:hover { border-color: var(--border-mid); color: var(--text); }
+.gantt-person-pill.active {
+  background: var(--primary-bg); color: var(--primary);
+  border-color: rgba(28,81,225,.3); font-weight: 600;
+}
+.gantt-person-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.gantt-show-all {
+  font-size: 11px; font-weight: 600; color: var(--primary);
+  padding: 4px 8px; cursor: pointer; white-space: nowrap;
+  background: transparent; border: none;
+}
+.gantt-show-all:hover { text-decoration: underline; }
+
+/* Zoom controls */
+.gantt-zoom-btns {
+  display: flex; gap: 0; border: 1.5px solid var(--border-mid);
+  border-radius: var(--radius); overflow: hidden; flex-shrink: 0;
+}
+.gantt-zoom-btn {
+  padding: 6px 12px; font-size: 12px; font-weight: 600; border: none; border-radius: 0;
+  background: var(--surface); color: var(--text-2); cursor: pointer;
+  border-right: 1px solid var(--border); font-family: 'Lexend', sans-serif; transition: all .15s;
+}
+.gantt-zoom-btn:last-child { border-right: none; }
+.gantt-zoom-btn:hover, .gantt-zoom-btn.active { background: var(--primary-bg); color: var(--primary); }
+
+/* Today badge row */
+.gantt-today-strip {
+  display: flex; align-items: center; gap: 12px;
+  padding: 6px 14px; background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; color: var(--text-3);
+}
+.gantt-today-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--primary); color: #fff;
+  font-size: 10px; font-weight: 800; letter-spacing: .05em;
+  padding: 2px 8px; border-radius: 4px;
+}
+
+/* Scrollable body */
+.gantt-scroll-body { overflow-x: auto; border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+.gantt-inner { min-width: 800px; }
+
+/* Header row */
+.gantt-hdr {
+  display: flex; align-items: stretch;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface-2);
+  position: sticky; top: 0; z-index: 10;
+}
+.gantt-lbl-col {
+  width: 200px; min-width: 200px; flex-shrink: 0;
+  padding: 8px 12px; font-size: 10px; font-weight: 700;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: .07em;
+  border-right: 1px solid var(--border);
+}
+.gantt-tl-col { flex: 1; display: flex; }
+.gantt-wk-cell {
+  flex: 1; padding: 8px 4px; font-size: 10px; font-weight: 600;
+  color: var(--text-3); border-left: 1px solid var(--border);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gantt-wk-cell.today-wk { color: var(--primary); font-weight: 700; background: rgba(28,81,225,.05); border-left: 2px solid var(--primary); }
+
+/* Engineer section */
+.gantt-eng-sec { border-bottom: 2px solid var(--border-mid); }
+.gantt-eng-hdr {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: var(--surface);
+  cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text);
+  border-bottom: 1px solid var(--border); user-select: none;
+}
+.gantt-eng-hdr:hover { background: var(--secondary-hover); }
+.gantt-eng-hdr-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.gantt-eng-hdr-meta { font-size: 11px; color: var(--text-3); font-weight: 400; margin-left: auto; }
+.gantt-eng-hdr-chevron { color: var(--text-3); font-size: 13px; transition: transform .2s; flex-shrink: 0; }
+.gantt-eng-sec.collapsed .gantt-eng-hdr-chevron { transform: rotate(-90deg); }
+.gantt-eng-sec.collapsed .gantt-eng-body { display: none; }
+
+/* Initiative row */
+.gantt-row {
+  display: flex; align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.gantt-row:hover { background: rgba(0,0,0,.015); }
+.gantt-row-lbl {
+  width: 200px; min-width: 200px; flex-shrink: 0;
+  padding: 6px 10px 6px 18px;
+  border-right: 1px solid var(--border);
+}
+.gantt-row-lbl-name {
+  font-size: 11px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 5px;
+}
+.gantt-row-lbl-sub { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+.gantt-row-tl {
+  flex: 1; position: relative; height: 46px;
+}
+
+/* Grid lines */
+.gantt-gl {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  background: var(--border); pointer-events: none; z-index: 1;
+}
+
+/* The bar */
+.gantt-bar {
+  position: absolute; height: 26px; top: 10px;
+  border-radius: 5px; min-width: 20px;
+  cursor: grab; overflow: hidden;
+  display: flex; align-items: center;
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,.95);
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  transition: box-shadow .15s, transform .1s;
+  user-select: none; z-index: 2;
+}
+.gantt-bar:hover { box-shadow: 0 3px 10px rgba(0,0,0,.22); transform: translateY(-1px); z-index: 5; }
+.gantt-bar.dragging { cursor: grabbing; opacity: .85; box-shadow: 0 6px 20px rgba(0,0,0,.28); z-index: 20; transform: scale(1.015); }
+.gantt-bar-done-overlay {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: rgba(255,255,255,.28); pointer-events: none; border-radius: 5px 0 0 5px;
+}
+.gantt-bar-text {
+  position: relative; z-index: 1; padding: 0 8px;
+  overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+}
+
+/* Today single vertical line */
+.gantt-today-line-overlay {
+  position: absolute; top: 0; bottom: 0; width: 0;
+  pointer-events: none; z-index: 8;
+}
+.gantt-today-vline {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 2px; margin-left: -1px;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(28,81,225,.4);
+}
+.gantt-today-flag {
+  position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary); color: #fff;
+  font-size: 9px; font-weight: 800; letter-spacing: .06em;
+  padding: 3px 7px; border-radius: 0 0 5px 5px;
+  white-space: nowrap; box-shadow: 0 2px 6px rgba(28,81,225,.4);
+}
+
+/* Reset / save */
+.gantt-save-notice { font-size: 11px; color: var(--success); display: none; }
+.gantt-tooltip {
+  position: fixed;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  padding: 0;
+  font-size: 12px; line-height: 1.5;
+  max-width: 420px; min-width: 300px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.14), 0 2px 8px rgba(28,81,225,.08);
+  z-index: 9999; pointer-events: auto;
+  display: none;
+  overflow: hidden;
+}
+.gantt-tooltip.visible { display: block; }
+.gantt-tooltip-header { padding: 12px 14px 8px; border-bottom: 1px solid var(--border); }
+.gantt-tooltip-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.gantt-tooltip-meta { font-size: 11px; color: var(--text-2); }
+.gantt-tooltip-tickets {
+  max-height: 260px; overflow-y: auto;
+  padding: 4px 0;
+}
+.gantt-tooltip-tickets::-webkit-scrollbar { width: 5px; }
+.gantt-tooltip-tickets::-webkit-scrollbar-track { background: transparent; }
+.gantt-tooltip-tickets::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 4px; }
+.gantt-tooltip-ticket {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.gantt-tooltip-ticket:last-child { border-bottom: none; }
+.gantt-tooltip-ticket a { color: var(--primary); font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.gantt-tooltip-ticket a:hover { color: var(--primary-hover); text-decoration: underline; }
+.gantt-ticket-summary { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.gantt-ticket-loe { color: var(--text-3); font-size: 10px; font-weight: 600; white-space: nowrap; flex-shrink: 0; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 1px 6px; }
+.gantt-ticket-done { opacity: .6; }
+.gantt-tooltip-status-badge {
+  font-size: 10px; font-weight: 600; white-space: nowrap; flex-shrink: 0;
+  border-radius: 8px; padding: 1px 7px; letter-spacing: .01em;
+}
+.gantt-tooltip-more { font-size: 10px; color: var(--text-3); padding: 5px 14px 8px; text-align: right; border-top: 1px solid var(--border); }
+
+/* Week grid lines on timeline */
+.gantt-grid-line {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  background: var(--border); pointer-events: none; z-index: 1;
+}
+
+/* LOE chips */
+.gantt-loe-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1px 7px;
+  font-size: 10px; font-weight: 600; color: var(--text-2);
+}
+
+/* Controls */
+.gantt-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.gantt-zoom-btns { display: flex; gap: 0; border: 1.5px solid var(--border-mid); border-radius: var(--radius); overflow: hidden; }
+.gantt-zoom-btn {
+  padding: 7px 13px; font-size: 12px; font-weight: 600; border: none; border-radius: 0;
+  background: var(--surface); color: var(--text-2); cursor: pointer;
+  border-right: 1px solid var(--border);
+  font-family: 'Lexend', sans-serif;
+  transition: all .15s;
+}
+.gantt-zoom-btn:last-child { border-right: none; }
+.gantt-zoom-btn:hover, .gantt-zoom-btn.active { background: var(--primary-bg); color: var(--primary); }
+.gantt-save-notice { font-size: 11px; color: var(--success); display: none; }
+.gantt-reset-btn { font-size: 11px; color: var(--text-3); background: transparent; border: none; cursor: pointer; padding: 0; }
+.gantt-reset-btn:hover { color: var(--danger); }
+
+/* Legend */
+.gantt-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11px; color: var(--text-2); margin-bottom: 12px; align-items: center; }
+.gantt-legend-item { display: flex; align-items: center; gap: 5px; }
+.gantt-legend-swatch { width: 14px; height: 8px; border-radius: 3px; }
+
+/* Old gantt compat (keep for mobile) */
+.gantt-engineer { margin-bottom: 22px; }
+.eng-name { font-size: 12px; font-weight: 600; padding: 6px 0 5px; display: flex; align-items: center; gap: 8px; color: var(--text); }
+.eng-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.gantt-row { display: flex; align-items: center; min-height: 26px; margin-bottom: 3px; }
+.gantt-task-label { width: 180px; min-width: 180px; font-size: 11px; color: var(--text-2); padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
+.gantt-timeline { flex: 1; position: relative; height: 18px; }
+.gantt-bar { position: absolute; height: 14px; top: 2px; border-radius: 4px; min-width: 8px; }
+.gantt-week-header { display: flex; margin-left: 180px; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+.gantt-week-lbl { flex: 1; font-size: 10px; color: var(--text-3); padding-left: 3px; border-left: 1px solid var(--border); font-weight: 500; }
+
+/* ── Risk cards ── */
+.risk-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  padding: 14px 18px; margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+}
+.risk-title {
+  font-size: 13px; font-weight: 600;
+  margin-bottom: 5px;
+  display: flex; align-items: center; gap: 8px;
+}
+.risk-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.risk-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; font-weight: 400; }
+
+/* ── Risk tab: per-initiative cards ── */
+.risk-initiative-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  scroll-margin-top: 80px;
+}
+.risk-init-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.risk-init-key {
+  font-size: 13px; font-weight: 700; color: var(--primary);
+  white-space: nowrap;
+}
+.risk-init-name {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+}
+.risk-init-meta {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;
+}
+.risk-meta-item {
+  font-size: 11px; color: var(--text-2); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px;
+  display: flex; align-items: center; gap: 4px;
+}
+.risk-reasons { display: flex; flex-direction: column; gap: 6px; }
+.risk-reason {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 10px; border-radius: 8px; font-size: 12px;
+}
+.risk-reason.level-red { background: var(--danger-bg); color: var(--danger-text); }
+.risk-reason.level-amber { background: var(--warning-bg); color: var(--warning-text); }
+.risk-reason.level-info { background: var(--info-bg); color: var(--info-text); }
+.risk-reason i { font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+
+/* ── Risk summary bar ── */
+.risk-summary-bar {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+}
+.risk-summary-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 12px; font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+.rsp-count { font-size: 18px; font-weight: 700; line-height: 1; }
+
+/* ── Inline risk badge on project rows ── */
+.risk-badge-inline {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 20px;
+  font-size: 10px; font-weight: 700;
+  cursor: pointer; text-decoration: none;
+  white-space: nowrap; letter-spacing: 0.02em;
+  transition: opacity 0.15s;
+}
+.risk-badge-inline:hover { opacity: 0.8; text-decoration: none; }
+.rbi-red { background: var(--danger-bg); color: var(--danger-text); border: 1px solid rgba(220,38,38,0.2); }
+.rbi-amber { background: var(--warning-bg); color: var(--warning-text); border: 1px solid rgba(217,119,6,0.2); }
+
+/* ── Empty state ── */
+.empty-state { text-align: center; padding: 64px 20px; color: var(--text-3); }
+.empty-state i { font-size: 40px; margin-bottom: 16px; display: block; color: var(--primary-disabled); }
+.empty-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--text-2); }
+.empty-sub { font-size: 13px; font-weight: 400; }
+
+/* ── Spinner ── */
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: -2px; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Settings layout ── */
+.inline-row { display: flex; gap: 8px; }
+.inline-row input { flex: 1; }
+.field-group { margin-bottom: 18px; }
+.field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 7px; letter-spacing: 0.01em; }
+.field-hint { font-size: 11px; color: var(--text-3); margin-top: 5px; font-weight: 400; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.section { display: none; }
+.section.active { display: block; }
+.child-row td { background: var(--surface-2) !important; }
+
+/* ── Sortable column headers ── */
+.th-sort {
+  cursor: pointer; user-select: none; white-space: nowrap;
+}
+.th-sort:hover { color: var(--primary); }
+.th-sort .sort-icon { display: inline-flex; align-items: center; margin-left: 3px; opacity: 0.3; font-size: 10px; vertical-align: middle; transition: opacity 0.15s; }
+.th-sort:hover .sort-icon { opacity: 0.65; }
+.th-sort.sorted .sort-icon { opacity: 1; color: var(--primary); }
+
+/* Accordion animation */
+.accordion-row { overflow: hidden; }
+@keyframes rowFadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+/* Finder-style indent levels */
+.level-epic { background: var(--surface) !important; }
+.level-epic td { background: var(--surface) !important; }
+.level-ticket { background: var(--surface-2) !important; }
+.level-ticket td { background: var(--surface-2) !important; }
+
+/* Chevron expand button — no border, just the arrow */
+.expand-btn {
+  width: 20px !important; height: 20px !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  color: var(--text-3) !important;
+  transition: color 0.12s !important;
+  flex-shrink: 0;
+}
+.expand-btn:hover { color: var(--primary) !important; background: transparent !important; }
+.expand-btn svg { transition: transform 0.2s ease; display: block; }
+.expand-btn[aria-expanded="true"] svg { transform: rotate(90deg); }
+
+/* Finder-style row indent using padding on the key cell */
+.indent-init { padding-left: 8px !important; }
+.indent-epic { padding-left: 8px !important; }
+.indent-ticket { padding-left: 8px !important; }
+
+/* Key cell no-wrap */
+.key-cell { white-space: nowrap; }
+
+/* Open initiative highlight */
+.init-row.is-open td { background: #EEF2FD !important; }
+.init-row.is-open { border-left: 3px solid #1C51E1; }
+
+/* Level backgrounds */
+.level-epic td { background: #F8F9FF !important; }
+.level-ticket td { background: #F4F5F8 !important; }
+
+/* Folder color */
+.folder-icon { color: #1C51E1; margin-right: 4px; font-size: 13px; }
+.file-icon { color: var(--text-3); margin-right: 4px; font-size: 12px; }
+.section-title {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-3); margin-bottom: 12px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+
+/* ── Divider ── */
+hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* ── Expand buttons in table ── */
+.expand-btn {
+  width: 22px !important; height: 22px !important;
+  padding: 0 !important; border-radius: 6px !important;
+  font-size: 14px !important; font-weight: 700 !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text-3) !important;
+  background: var(--surface) !important;
+  line-height: 1 !important;
+}
+.expand-btn:hover { border-color: var(--primary) !important; color: var(--primary) !important; background: var(--primary-bg) !important; }
+
+/* ── Throughput tab ── */
+.throughput-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.eng-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .15s;
+}
+.eng-card:hover { box-shadow: var(--shadow); }
+.eng-card-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+}
+.eng-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.eng-name { font-size: 14px; font-weight: 700; flex: 1; }
+.eng-stat-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px; margin-bottom: 12px;
+}
+.eng-stat {
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  padding: 8px 10px; text-align: center;
+  border: 1px solid var(--border);
+}
+.eng-stat-val { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1; }
+.eng-stat-lbl { font-size: 10px; color: var(--text-3); font-weight: 500; margin-top: 3px; text-transform: uppercase; letter-spacing: .04em; }
+.eng-tasks { font-size: 11px; color: var(--text-2); }
+.eng-task-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.eng-task-row:last-child { border-bottom: none; }
+.eng-task-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--text-2); }
+.eng-task-hrs { font-size: 11px; font-weight: 600; color: var(--text); flex-shrink: 0; margin-left: 8px; }
+.throughput-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 18px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 700px) {
+  .metrics { grid-template-columns: 1fr 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .gantt-task-label { width: 110px; min-width: 110px; }
+  .gantt-week-header { margin-left: 110px; }
+  .shell { padding: 0 16px 40px; }
+  .throughput-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="top-bar-inner">
+    <div class="logo">
+      <div class="logo-mark" style="background:#1C51E1;width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+          <ellipse cx="50" cy="42" rx="46" ry="32" fill="#1C51E1"/>
+          <ellipse cx="50" cy="40" rx="40" ry="27" fill="#1C51E1"/>
+          <path d="M50 18 L28 62 L50 50 L72 62 Z" fill="white"/>
+          <path d="M36 45 L24 65 L50 52 Z" fill="white" opacity="0.7"/>
+          <path d="M64 45 L76 65 L50 52 Z" fill="white" opacity="0.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-name" style="display:flex;align-items:center;gap:6px;">
+          <span style="font-weight:800;letter-spacing:-0.02em;">SUMMIT</span><span style="color:#1C51E1;font-weight:800;">K12</span>
+        </div>
+        <div class="logo-sub">Roadmap Dashboard &middot; Live from Jira</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span id="lastSync"></span>
+      <button onclick="syncJira()" id="syncBtn">
+        <i class="ti ti-refresh" aria-hidden="true"></i>Sync
+      </button>
+      <button onclick="showTab('settings',this)" id="settingsTabBtn" class="btn-primary">
+        <i class="ti ti-settings" aria-hidden="true"></i>Settings
+      </button>
+    </div>
+  </div>
+  <nav class="nav-tabs" aria-label="Dashboard sections">
+    <button class="nav-tab active" onclick="showTab('projects',this)"><i class="ti ti-list" aria-hidden="true"></i>Projects</button>
+    <button class="nav-tab" onclick="showTab('halted',this)" id="haltedTabBtn"><i class="ti ti-player-pause" aria-hidden="true"></i>Halted<span id="haltedCount" style="display:none;background:#F5EFE7;color:#7C4A1E;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;"></span></button>
+    <button class="nav-tab" onclick="showTab('gantt',this)"><i class="ti ti-calendar-stats" aria-hidden="true"></i>Gantt</button>
+    <button class="nav-tab" onclick="showTab('risk',this)"><i class="ti ti-alert-triangle" aria-hidden="true"></i>Risk</button>
+    <button class="nav-tab" onclick="showTab('throughput',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Throughput</button>
+  </nav>
+</div>
+
+<div class="shell">
+<div class="page-content">
+
+<div id="globalMsg" class="msg"></div>
+
+<!-- PROJECTS -->
+<div class="section active" id="tab-projects">
+  <div id="projectsContent">
+    <div class="empty-state"><i class="ti ti-table" aria-hidden="true"></i><div class="empty-sub">Sync Jira data to see projects.</div></div>
+  </div>
+</div>
+
+<!-- HALTED -->
+<div class="section" id="tab-halted">
+  <div id="haltedContent">
+    <div class="empty-state"><i class="ti ti-player-pause" aria-hidden="true"></i><div class="empty-sub">Sync Jira data to see halted initiatives.</div></div>
+  </div>
+</div>
+
+<!-- GANTT -->
+<div class="section" id="tab-gantt">
+  <div id="ganttContent">
+    <div class="empty-state"><i class="ti ti-calendar-stats" aria-hidden="true"></i><div class="empty-sub">Sync Jira data to see timeline.</div></div>
+  </div>
+</div>
+
+<!-- RISK -->
+<div class="section" id="tab-risk">
+  <div id="riskContent">
+    <div class="empty-state"><i class="ti ti-alert-triangle" aria-hidden="true"></i><div class="empty-sub">Sync Jira data to see risk signals.</div></div>
+  </div>
+</div>
+
+<!-- THROUGHPUT -->
+<div class="section" id="tab-throughput">
+  <div id="throughputContent">
+    <div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><div class="empty-sub">Sync Jira data to see engineer throughput.</div></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="section" id="tab-settings">
+  <div class="card">
+    <div class="card-title">Jira connection</div>
+    <div class="field-group">
+      <label class="field-label" for="jiraDomain">Jira domain</label>
+      <input type="text" id="jiraDomain" placeholder="yourcompany.atlassian.net" />
+      <div class="field-hint">Just the domain — no https:// needed.</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="jiraEmail">Account email</label>
+      <input type="email" id="jiraEmail" placeholder="you@company.com" />
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="jiraToken">API token</label>
+      <div class="inline-row">
+        <input type="password" id="jiraToken" placeholder="Paste your Atlassian API token" />
+        <button onclick="toggleToken()" style="flex-shrink:0;width:40px;display:flex;align-items:center;justify-content:center;" aria-label="Toggle token visibility">
+          <i class="ti ti-eye" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="field-hint">Generate at <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">id.atlassian.com</a> → Security → API tokens.</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="projectKey">Jira project key</label>
+      <input type="text" id="projectKey" placeholder="e.g. ROAD or ENG" />
+      <div class="field-hint">The short key shown before ticket numbers (e.g. ROAD-123).</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button onclick="testConnection()" class="btn-primary">Test connection</button>
+      <button onclick="saveSettings()">Save settings</button>
+    </div>
+    <div id="connMsg" class="msg" style="margin-top:10px;"></div>
+    <div id="saveMsg" class="msg" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Initiatives</div>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Enter the Jira ticket keys for each initiative. These become the top-level roadmap items — child epics and stories are pulled automatically.</p>
+    <div class="field-group">
+      <label class="field-label" for="initiativeInput">Add initiative keys</label>
+      <div class="inline-row">
+        <input type="text" id="initiativeInput" placeholder="ROAD-1, ROAD-2, ROAD-5 — comma separated" onkeydown="if(event.key==='Enter')addInitiatives()" />
+        <button onclick="addInitiatives()" style="flex-shrink:0;">Add</button>
+      </div>
+    </div>
+    <div class="tags-row" id="initiativeTags"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Initiative Groups <span style="font-size:11px;font-weight:500;color:var(--purple-text);background:var(--purple-bg);padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;"><i class="ti ti-folders"></i> Roll-up folders</span></div>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Group multiple initiatives under one roll-up folder row in the Projects table. Great for when a single project is tracked as multiple Jira initiatives (e.g. K-1 broken into phases).</p>
+    <div id="groupsList" style="margin-bottom:14px;"></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button onclick="addGroup()"><i class="ti ti-plus"></i> Add Group</button>
+    </div>
+    <div id="groupsSaved" style="font-size:12px;color:var(--success);display:none;margin-top:8px;font-weight:500;"><i class="ti ti-check"></i> Groups saved</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Initiative dates <span style="font-size:11px;font-weight:500;color:var(--success);background:var(--success-bg);padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;"><i class="ti ti-database"></i> Auto-synced from Jira</span></div>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">
+      Dev needed-by and customer go-live dates are now pulled directly from Jira using the custom fields mapped below (<code style="font-size:12px;background:var(--bg);padding:1px 5px;border-radius:4px;">customfield_10209</code> and <code style="font-size:12px;background:var(--bg);padding:1px 5px;border-radius:4px;">customfield_11767</code>). 
+      Use the overrides below <em>only</em> if you need to set a date that differs from Jira — leave blank to use the Jira value.
+    </p>
+    <div id="datesTableWrap">
+      <span style="font-size:12px;color:var(--text-3);">Add initiative keys above to set date overrides.</span>
+    </div>
+    <div style="margin-top:14px;display:flex;align-items:center;gap:12px;">
+      <button onclick="saveDates()"><i class="ti ti-device-floppy"></i> Save overrides</button>
+      <span id="datesSaved" style="font-size:12px;color:var(--success);display:none;font-weight:500;"><i class="ti ti-check"></i> Saved</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Custom field mapping</div>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Map your Jira custom fields to dashboard columns. Use the field IDs (e.g. <code style="font-family:'DM Mono',monospace;font-size:12px;background:var(--bg);padding:1px 5px;border-radius:4px;">customfield_10015</code>). Leave blank to skip.</p>
+    <div class="two-col">
+      <div class="field-group">
+        <label class="field-label" for="fieldDevBy">Dev need-by date</label>
+        <input type="text" id="fieldDevBy" placeholder="customfield_10015" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="fieldRelease">Customer release date</label>
+        <input type="text" id="fieldRelease" placeholder="customfield_10020" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="fieldLOE">LOE / story points</label>
+        <input type="text" id="fieldLOE" placeholder="story_points" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="fieldPriority">Business priority</label>
+        <input type="text" id="fieldPriority" placeholder="priority" />
+      </div>
+    </div>
+    <button onclick="saveSettings()">Save field mapping</button>
+  </div>
+</div>
+
+</div><!-- page-content -->
+</div><!-- .shell -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const S = { domain:'', email:'', token:'', projectKey:'', initiatives:[], initiativeDates:{}, fields:{ devBy:'', release:'', loe:'story_points', priority:'priority' }, lastSync:null, data:[], ganttOffsets:{}, ganttZoom:16, ganttActiveEngs:[], groups:[] };
+// groups: [{ name:'Trailblazers K-1', keys:['LMS-24929','LMS-25279','LMS-25288','LMS-25289'] }, ...]
+let projSort = { col: null, dir: 1 }; // col: 'progress'|'devBy'|'goLive'|'risk', dir: 1=asc -1=desc
+
+function loadSettings() {
+  try { const s = localStorage.getItem('jira_dash'); if(s) Object.assign(S, JSON.parse(s)); } catch(e){}
+  if(!S.groups) S.groups = [];
+  applyToForm();
+  if(S.data && S.data.length > 0) renderDashboard();
+}
+
+function applyToForm() {
+  ['jiraDomain','jiraEmail','jiraToken','projectKey'].forEach(id => {
+    const key = id.replace('jira','').replace('project','project').toLowerCase();
+    const map = { jiradomain:'domain', jiraemail:'email', jiratoken:'token', projectkey:'projectKey' };
+    if(S[map[id.toLowerCase()]]) document.getElementById(id).value = S[map[id.toLowerCase()]];
+  });
+  if(S.fields.devBy) document.getElementById('fieldDevBy').value = S.fields.devBy;
+  if(S.fields.release) document.getElementById('fieldRelease').value = S.fields.release;
+  if(S.fields.loe) document.getElementById('fieldLOE').value = S.fields.loe;
+  if(S.fields.priority) document.getElementById('fieldPriority').value = S.fields.priority;
+  renderTags();
+  renderGroupsList();
+  renderDatesTable();
+  if(S.lastSync) document.getElementById('lastSync').textContent = 'Synced ' + new Date(S.lastSync).toLocaleTimeString();
+}
+
+function persist() { try { localStorage.setItem('jira_dash', JSON.stringify(S)); } catch(e){} }
+
+function saveSettings() {
+  S.domain = document.getElementById('jiraDomain').value.trim().replace(/^https?:\/\//,'').replace(/\/$/,'');
+  S.email = document.getElementById('jiraEmail').value.trim();
+  S.token = document.getElementById('jiraToken').value.trim();
+  S.projectKey = document.getElementById('projectKey').value.trim().toUpperCase();
+  S.fields.devBy = document.getElementById('fieldDevBy').value.trim();
+  S.fields.release = document.getElementById('fieldRelease').value.trim();
+  S.fields.loe = document.getElementById('fieldLOE').value.trim() || 'story_points';
+  S.fields.priority = document.getElementById('fieldPriority').value.trim() || 'priority';
+  persist();
+  showMsg('saveMsg','ok','Settings saved.');
+}
+
+function addInitiatives() {
+  const val = document.getElementById('initiativeInput').value;
+  val.split(',').map(k=>k.trim().toUpperCase()).filter(k=>k).forEach(k=>{ if(!S.initiatives.includes(k)) S.initiatives.push(k); });
+  document.getElementById('initiativeInput').value = '';
+  renderTags(); renderDatesTable(); persist();
+}
+
+function removeInitiative(k) { S.initiatives = S.initiatives.filter(i=>i!==k); delete S.initiativeDates[k]; renderTags(); renderDatesTable(); persist(); }
+
+function renderTags() {
+  const el = document.getElementById('initiativeTags');
+  el.innerHTML = S.initiatives.length === 0
+    ? '<span style="font-size:12px;color:var(--text-3);">No initiatives added yet.</span>'
+    : S.initiatives.map(k=>`<span class="init-tag">${k}<button onclick="removeInitiative('${k}')" aria-label="Remove ${k}">×</button></span>`).join('');
+}
+
+function toggleToken() { const el=document.getElementById('jiraToken'); el.type=el.type==='password'?'text':'password'; }
+
+// ── Initiative Groups ──────────────────────────────────────────────────────
+
+function renderGroupsList() {
+  const el = document.getElementById('groupsList');
+  if(!el) return;
+  if(!S.groups || !S.groups.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:4px 0;">No groups defined yet. Click "Add Group" to create one.</div>';
+    return;
+  }
+  el.innerHTML = S.groups.map((g, i) => `
+    <div style="border:1.5px solid var(--border-mid);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;background:var(--surface-2);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <i class="ti ti-folders" style="color:var(--primary);font-size:15px;flex-shrink:0;"></i>
+        <input type="text" id="gname_${i}" value="${(g.name||'').replace(/"/g,'&quot;')}" placeholder="Group name (e.g. Trailblazers K-1)"
+          style="flex:1;font-weight:600;" oninput="saveGroups()" />
+        <button onclick="removeGroup(${i})" style="padding:4px 8px;font-size:11px;color:var(--danger);border-color:rgba(220,38,38,0.3);" title="Delete group"><i class="ti ti-trash"></i></button>
+      </div>
+      <div>
+        <label class="field-label" style="margin-bottom:4px;">Initiative keys in this group (comma-separated)</label>
+        <input type="text" id="gkeys_${i}" value="${(g.keys||[]).join(', ')}" placeholder="LMS-24929, LMS-25279, LMS-25288, LMS-25289"
+          style="font-family:monospace;font-size:12px;" oninput="saveGroups()" />
+        <div class="field-hint">These initiatives will be folded under the group name on the Projects tab. Their stats are rolled up automatically.</div>
+      </div>
+    </div>`).join('');
+}
+
+function addGroup() {
+  if(!S.groups) S.groups = [];
+  S.groups.push({ name: '', keys: [] });
+  renderGroupsList();
+  persist();
+  // Focus new group's name input
+  const inputs = document.querySelectorAll('[id^="gname_"]');
+  if(inputs.length) inputs[inputs.length-1].focus();
+}
+
+function removeGroup(i) {
+  S.groups.splice(i, 1);
+  renderGroupsList();
+  persist();
+  if(S.data.length) renderDashboard();
+}
+
+function saveGroups() {
+  if(!S.groups) S.groups = [];
+  S.groups.forEach((g, i) => {
+    const nameEl = document.getElementById('gname_'+i);
+    const keysEl = document.getElementById('gkeys_'+i);
+    if(nameEl) g.name = nameEl.value.trim();
+    if(keysEl) g.keys = keysEl.value.split(',').map(k=>k.trim().toUpperCase()).filter(Boolean);
+  });
+  persist();
+  const saved = document.getElementById('groupsSaved');
+  if(saved) { saved.style.display='inline'; setTimeout(()=>saved.style.display='none', 2000); }
+  if(S.data.length) renderDashboard();
+}
+
+function renderDatesTable() {
+  const wrap = document.getElementById('datesTableWrap');
+  if(!wrap) return;
+  if(!S.initiatives.length) {
+    wrap.innerHTML = '<span style="font-size:12px;color:var(--text-3);">Add initiative keys above to set dates.</span>';
+    return;
+  }
+  const rows = S.initiatives.map(key => {
+    const d = S.initiativeDates[key] || {};
+    const synced = S.data.find(p => p.key === key);
+    const name = d.name || (synced ? synced.summary : '');
+    return `<tr>
+      <td style="font-weight:600;white-space:nowrap;color:var(--primary);font-size:12px;padding:7px 10px;">${key}</td>
+      <td style="padding:7px 10px;"><input type="text" id="dname_${key}" value="${(name||'').replace(/"/g,'&quot;')}" placeholder="Auto-fills on sync" style="width:100%;max-width:300px;padding:6px 9px;font-size:12px;" /></td>
+      <td style="padding:7px 10px;"><input type="date" id="ddev_${key}" value="${d.devBy||''}" style="padding:6px 9px;font-size:12px;width:145px;" /></td>
+      <td style="padding:7px 10px;"><input type="date" id="dgo_${key}" value="${d.goLive||''}" style="padding:6px 9px;font-size:12px;width:145px;" /></td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<div style="overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);">
+      <thead><tr style="background:var(--surface-2);">
+        <th style="text-align:left;padding:9px 10px;font-size:11px;font-weight:600;color:var(--text-3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px;">Initiative</th>
+        <th style="text-align:left;padding:9px 10px;font-size:11px;font-weight:600;color:var(--text-3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px;">Name / Label</th>
+        <th style="text-align:left;padding:9px 10px;font-size:11px;font-weight:600;color:var(--text-3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px;">Dev By Override <span style="font-weight:400;text-transform:none;font-size:10px;">(blank = use Jira)</span></th>
+        <th style="text-align:left;padding:9px 10px;font-size:11px;font-weight:600;color:var(--text-3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px;">Go-Live Override <span style="font-weight:400;text-transform:none;font-size:10px;">(blank = use Jira)</span></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
+function saveDates() {
+  for(const key of S.initiatives) {
+    const ne = document.getElementById('dname_' + key);
+    const de = document.getElementById('ddev_' + key);
+    const ge = document.getElementById('dgo_' + key);
+    if(!ne) continue;
+    if(!S.initiativeDates[key]) S.initiativeDates[key] = {};
+    S.initiativeDates[key].name  = ne.value.trim();
+    S.initiativeDates[key].devBy = de.value;
+    S.initiativeDates[key].goLive= ge.value;
+  }
+  persist();
+  const ind = document.getElementById('datesSaved');
+  ind.style.display = 'inline'; setTimeout(() => ind.style.display = 'none', 2500);
+  if(S.data.length) renderDashboard();
+}
+
+function showMsg(id, type, msg, duration=4000) {
+  const el=document.getElementById(id);
+  el.className='msg msg-'+(type==='ok'?'ok':type==='err'?'err':'info');
+  el.innerHTML=msg; el.style.display='block';
+  if(duration) setTimeout(()=>el.style.display='none', duration);
+}
+
+function auth() { return 'Basic ' + btoa(S.email+':'+S.token); }
+function apiUrl(path) {
+  const isProxy = S.domain.includes('localhost');
+  return isProxy
+    ? 'http://' + S.domain + '/rest/api/3/' + path
+    : 'https://' + S.domain + '/rest/api/3/' + path;
+}
+function fetchOpts() {
+  return { headers: { Authorization: auth(), Accept: 'application/json', 'X-Auth': auth() } };
+}
+
+async function testConnection() {
+  saveSettings();
+  if(!S.domain||!S.email||!S.token){ showMsg('connMsg','err','Fill in domain, email, and token first.'); return; }
+  showMsg('connMsg','info','<span class="spinner"></span>Testing…', 0);
+  try {
+    const r = await fetch(apiUrl('myself'), fetchOpts());
+    if(r.ok){ const d=await r.json(); showMsg('connMsg','ok','Connected as '+d.displayName+' ('+d.emailAddress+')'); }
+    else { const e=await r.json().catch(()=>({})); showMsg('connMsg','err','Error '+r.status+': '+(e.message||'Check credentials.')); }
+  } catch(e) { showMsg('connMsg','err','Network error: '+e.message); }
+}
+
+async function fetchIssue(key) {
+  const r = await fetch(apiUrl('issue/'+key), fetchOpts());
+  return r.ok ? r.json() : null;
+}
+
+async function fetchWorklogs(key) {
+  try {
+    const r = await fetch(apiUrl('issue/'+key+'/worklog?maxResults=200'), fetchOpts());
+    if(!r.ok) return [];
+    const d = await r.json();
+    return (d.worklogs||[]).map(w => ({
+      author: w.author?.displayName||'—',
+      timeSpentSeconds: w.timeSpentSeconds||0,
+      started: w.started ? w.started.substring(0,10) : null
+    }));
+  } catch(e) { return []; }
+}
+
+const CHILD_FIELDS = ['summary','status','assignee','story_points','customfield_10016','customfield_10014','customfield_10015','customfield_10028','duedate','priority','issuetype','timeoriginalestimate','timeestimate','timespent','parent'];
+
+async function searchIssues(jql, extra=[]) {
+  const fields = [...new Set([...CHILD_FIELDS, ...extra, S.fields.loe, S.fields.devBy, S.fields.release].filter(Boolean))].join(',');
+  const url = apiUrl('search/jql?jql='+encodeURIComponent(jql)+'&maxResults=200&fields='+fields);
+  const r = await fetch(url, fetchOpts());
+  if(!r.ok) return [];
+  const d = await r.json();
+  return d.issues || [];
+}
+
+async function fetchAllDescendants(initiativeKey) {
+  const allIssues = [];
+
+  // Try all known ways to find children of an initiative/epic
+  const queries = [
+    `parent="${initiativeKey}"`,
+    `"Epic Link"="${initiativeKey}"`,
+    `issueFunction in subtasksOf("key = ${initiativeKey}")`,
+  ];
+
+  const directChildren = await searchIssues(`parent="${initiativeKey}"`);
+  const epicLinkChildren = await searchIssues(`"Epic Link"="${initiativeKey}"`);
+
+  const seen = new Set();
+  const addAll = (issues) => issues.forEach(i => { if(!seen.has(i.key)){ seen.add(i.key); allIssues.push(i); } });
+
+  addAll(directChildren);
+  addAll(epicLinkChildren);
+
+  // For each epic found, also fetch its stories/tasks
+  const epics = allIssues.filter(i => (i.fields.issuetype?.name||'').toLowerCase().includes('epic'));
+  for(const epic of epics) {
+    const epicChildren = await searchIssues(`parent="${epic.key}"`);
+    const epicLinkStories = await searchIssues(`"Epic Link"="${epic.key}"`);
+    addAll(epicChildren);
+    addAll(epicLinkStories);
+  }
+
+  return allIssues;
+}
+
+function getF(fields, key) { return key && fields[key] !== undefined ? fields[key] : null; }
+function parseDate(v) { if(!v) return null; if(typeof v==='string') return v.substring(0,10); return null; }
+function getLOE(fields) {
+  // Try custom/story point fields first (already in hours/points)
+  const ptFields = [S.fields.loe, 'story_points', 'customfield_10016', 'customfield_10028'];
+  for(const k of ptFields) {
+    if(!k) continue;
+    const v = getF(fields, k);
+    if(v !== null && v !== undefined && v !== '') {
+      const n = parseFloat(v);
+      if(!isNaN(n) && n > 0) return Math.round(n * 10) / 10;
+    }
+  }
+  // Fall back to timeoriginalestimate (stored in seconds, convert to hours)
+  const t = getF(fields, 'timeoriginalestimate');
+  if(t && parseFloat(t) > 0) return Math.round((parseFloat(t) / 3600) * 10) / 10;
+  const t2 = getF(fields, 'timeestimate');
+  if(t2 && parseFloat(t2) > 0) return Math.round((parseFloat(t2) / 3600) * 10) / 10;
+  return 0;
+}
+
+async function syncJira() {
+  if(!S.domain||!S.email||!S.token){ showMsg('globalMsg','err','Configure Jira connection in Settings first.'); return; }
+  if(!S.initiatives.length){ showMsg('globalMsg','err','Add at least one initiative key in Settings.'); return; }
+  const btn=document.getElementById('syncBtn');
+  btn.innerHTML='<span class="spinner"></span>Syncing…'; btn.disabled=true;
+  showMsg('globalMsg','info','Fetching data from Jira… this may take a moment.', 0);
+  try {
+    const results=[];
+    for(const key of S.initiatives){
+      const issue=await fetchIssue(key); if(!issue) continue;
+      const f=issue.fields;
+
+      showMsg('globalMsg','info',`Fetching children for ${key}…`, 0);
+      const children = await fetchAllDescendants(key);
+
+      // Fetch worklogs for tickets that have timespent recorded (skip zero to save API calls)
+      const ticketsWithTime = children.filter(c => parseFloat(c.fields.timespent||0) > 0);
+      showMsg('globalMsg','info',`Fetching worklogs for ${key} (${ticketsWithTime.length} tickets with logged time)…`, 0);
+      const worklogMap = {}; // ticketKey -> [{ author, timeSpentSeconds, started }]
+      // Batch with a small concurrency limit to avoid hammering the API
+      const BATCH = 5;
+      for(let i=0; i<ticketsWithTime.length; i+=BATCH) {
+        const batch = ticketsWithTime.slice(i, i+BATCH);
+        const results2 = await Promise.all(batch.map(c => fetchWorklogs(c.key).then(wl => ({ key: c.key, wl }))));
+        results2.forEach(({ key: k, wl }) => { worklogMap[k] = wl; });
+      }
+
+      // Roll up using timeoriginalestimate (seconds -> hours) across all children
+      const totalLOE = children.reduce((a,c)=>{
+        const orig = parseFloat(c.fields.timeoriginalestimate||0);
+        return a + (orig > 0 ? orig/3600 : getLOE(c.fields));
+      }, 0);
+      const remLOE = children.reduce((a,c)=>{
+        const orig = parseFloat(c.fields.timeoriginalestimate||0);
+        const rem = parseFloat(c.fields.timeestimate||c.fields.timeoriginalestimate||0);
+        if(orig > 0) return a + rem/3600;
+        // fallback: if done count as 0 remaining
+        if((c.fields.status?.name||'').toLowerCase().includes('done')) return a;
+        return a + getLOE(c.fields);
+      }, 0);
+      const assignees=[...new Set(children.map(c=>c.fields.assignee?.displayName).filter(Boolean))];
+
+      // Read dates directly from Jira custom fields
+      const jiraDevBy  = parseDate(getF(f, S.fields.devBy))  || parseDate(f.duedate) || '—';
+      const jiraGoLive = parseDate(getF(f, S.fields.release)) || '—';
+
+      // Auto-fill initiative name into dates table after sync
+      if(f.summary && !S.initiativeDates[key]?.name) {
+        if(!S.initiativeDates[key]) S.initiativeDates[key]={};
+        S.initiativeDates[key].name = f.summary;
+      }
+
+      // Manual overrides in Settings > Initiative Dates take precedence if set,
+      // otherwise fall back to Jira custom fields
+      const devBy  = (S.initiativeDates[key]?.devBy  && S.initiativeDates[key].devBy  !== '') ? S.initiativeDates[key].devBy  : jiraDevBy;
+      const goLive = (S.initiativeDates[key]?.goLive && S.initiativeDates[key].goLive !== '') ? S.initiativeDates[key].goLive : jiraGoLive;
+      const release = jiraGoLive;
+
+      // Map children with corrected isDone/progress logic
+      const mappedChildren = children.map(c=>{
+          const orig = parseFloat(c.fields.timeoriginalestimate||0);
+          const statusName = (c.fields.status?.name||'').toLowerCase();
+          const isDone = (statusName.includes('done') || statusName.includes('closed') || statusName.includes('resolved') || statusName.includes('verified') || statusName.includes('on prod'))
+            && !statusName.includes('dev complete') && !statusName.includes('dev progress');
+          const rem = isDone ? 0 : parseFloat(c.fields.timeestimate||c.fields.timeoriginalestimate||0);
+          const logged = orig > 0 ? Math.max(0, orig - rem) : 0;
+          const worklogs = worklogMap[c.key] || [];
+          return {
+            key:c.key, summary:c.fields.summary,
+            type: c.fields.issuetype?.name||'',
+            status:c.fields.status?.name||'',
+            isDone,
+            parentKey: c.fields.parent?.key||null,
+            assignee:c.fields.assignee?.displayName||'—',
+            loe: orig > 0 ? Math.round(orig/3600*10)/10 : getLOE(c.fields),
+            remaining: isDone ? 0 : (orig > 0 ? Math.round(rem/3600*10)/10 : 0),
+            logged: isDone ? (orig > 0 ? Math.round(orig/3600*10)/10 : getLOE(c.fields)) : (orig > 0 ? Math.round(logged/3600*10)/10 : 0),
+            dueDate:parseDate(getF(c.fields,S.fields.devBy)||c.fields.duedate)||'—',
+            worklogs
+          };
+      });
+      // Roll up LOE and remaining from mapped children
+      const rolledLOE = Math.round(mappedChildren.reduce((a,c)=>a+c.loe,0)*10)/10;
+      const rolledRem = Math.round(mappedChildren.reduce((a,c)=>a+c.remaining,0)*10)/10;
+      results.push({
+        key, summary:f.summary, status:f.status?.name||'',
+        priority:getF(f,S.fields.priority)?.name||f.priority?.name||'',
+        loe:rolledLOE, rem:rolledRem,
+        devBy, goLive, release, assignees, childCount:children.length,
+        children:mappedChildren
+      });
+    }
+    S.data=results; S.lastSync=Date.now(); persist(); renderDatesTable();
+    document.getElementById('lastSync').textContent='Synced '+new Date().toLocaleTimeString();
+    const totalChildren = results.reduce((a,r)=>a+r.childCount,0);
+    showMsg('globalMsg','ok',`Synced ${results.length} initiatives, ${totalChildren} child issues.`);
+    renderDashboard();
+  } catch(e){ showMsg('globalMsg','err','Sync failed: '+e.message); }
+  btn.innerHTML='<i class="ti ti-refresh"></i> Sync'; btn.disabled=false;
+}
+
+function pct(loe,rem){ 
+  if(loe<=0) return 0;
+  if(rem<=0) return 100;
+  return Math.min(100, Math.round(((loe-rem)/loe)*100));
+}
+function barColor(p){ return p>=80?'#1D9E75':p>=40?'#378ADD':'#E24B4A'; }
+function statusBadge(s){
+  const l=(s||'').toLowerCase();
+  const label = s||'—';
+  // Green family
+  if(l==='done'||l.includes('complete')||l==='closed'||l.includes('verified')||l.includes('on prod')||l.includes('resolved'))
+    return `<span class="badge b-green">${label}</span>`;
+  // Blue family  
+  if(l==='dev complete'||l.includes('dev complete')||l.includes('dev progress'))
+    return `<span class="badge b-blue">${label}</span>`;
+  if(l.includes('progress')||l.includes('in progress')||l.includes('reopened'))
+    return `<span class="badge b-blue">${label}</span>`;
+  // Purple
+  if(l.includes('review')||l.includes('qa'))
+    return `<span class="badge b-purple">${label}</span>`;
+  // Red family
+  if(l.includes('blocked')||l==='bug'||l.includes('impediment')||l.includes('critical'))
+    return `<span class="badge b-red">${label}</span>`;
+  // Brown/halted
+  if(l.includes('halt')||l.includes('on hold')||l.includes('paused')||l.includes('duplicate'))
+    return `<span class="badge b-halted">${label}</span>`;
+  // Amber
+  if(l.includes('todo')||l.includes('to do')||l==='open'||l.includes('backlog')||l.includes('waiting'))
+    return `<span class="badge b-amber">${label}</span>`;
+  return `<span class="badge b-gray">${label}</span>`;
+}
+function progressCell(loe,rem){
+  const p=pct(loe,rem);
+  return loe>0
+    ? `<div style="display:flex;align-items:center;gap:5px;"><div class="progress-bar" style="min-width:44px;max-width:60px;flex:1;"><div class="progress-fill" style="width:${p}%;background:${barColor(p)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:26px;">${p}%</span></div>`
+    : '—';
+}
+
+function renderDashboard(){
+  const d=S.data; if(!d.length) return;
+  renderProjectsTab(); renderHaltedTab(); renderGanttTab(); renderRiskTab(); renderThroughputTab();
+}
+
+function sortProjects(col) {
+  if(projSort.col === col) {
+    projSort.dir *= -1;
+  } else {
+    projSort.col = col;
+    projSort.dir = col === 'risk' ? 1 : 1;
+  }
+  renderProjectsTab();
+}
+
+function renderProjectsTab(){
+  const isHalted = p => (p.status||'').toLowerCase().includes('halted');
+  const d = S.data.filter(p => !isHalted(p));
+  const domain = S.domain.includes('localhost') ? 'summitk12.atlassian.net' : S.domain;
+  const CHEVRON = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  // ── Compute metrics ──────────────────────────────────────────────────────
+  const totLOE = Math.round(d.reduce((a,p)=>a+p.loe,0));
+  const totRem = Math.round(d.reduce((a,p)=>a+p.rem,0));
+  const pctDone = totLOE>0 ? Math.round(((totLOE-totRem)/totLOE)*100) : 0;
+  const riskResults = d.map(p=>computeRisk(p));
+  const critCount  = riskResults.filter(r=>r.level==='red').length;
+  const atRiskCount= riskResults.filter(r=>r.level==='amber').length;
+  const onTrackCount = d.length - critCount - atRiskCount;
+
+  let html=`<div class="metrics" style="margin-bottom:20px;">
+    <div class="metric">
+      <div class="metric-label">Roadmap Initiatives</div>
+      <div class="metric-value">${d.length}</div>
+      <div class="metric-sub">${d.reduce((a,p)=>a+p.childCount,0)} child issues</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Original LOE (hrs)</div>
+      <div class="metric-value">${totLOE.toLocaleString()}</div>
+      <div class="metric-sub">total estimated hours</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Remaining (hrs)</div>
+      <div class="metric-value">${totRem.toLocaleString()}</div>
+      <div class="metric-sub">${pctDone}% complete overall</div>
+    </div>
+    <div class="metric" style="border-color:var(--border);">
+      <div class="metric-label">Risk Summary</div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin-top:4px;flex-wrap:wrap;">
+        <span style="display:flex;align-items:center;gap:5px;">
+          <span style="font-size:22px;font-weight:700;color:var(--danger);line-height:1;">${critCount}</span>
+          <span style="font-size:11px;color:var(--danger);font-weight:600;">Critical</span>
+        </span>
+        <span style="color:var(--border-mid);font-size:14px;">·</span>
+        <span style="display:flex;align-items:center;gap:5px;">
+          <span style="font-size:22px;font-weight:700;color:var(--warning);line-height:1;">${atRiskCount}</span>
+          <span style="font-size:11px;color:var(--warning);font-weight:600;">At Risk</span>
+        </span>
+        <span style="color:var(--border-mid);font-size:14px;">·</span>
+        <span style="display:flex;align-items:center;gap:5px;">
+          <span style="font-size:22px;font-weight:700;color:var(--success);line-height:1;">${onTrackCount}</span>
+          <span style="font-size:11px;color:var(--success);font-weight:600;">On Track</span>
+        </span>
+      </div>
+      <div class="metric-sub" style="margin-top:6px;">across all initiatives</div>
+    </div>
+  </div>
+
+  <!-- ── Strategic Initiative Completion ─────────────────────────────────── -->
+  ${(()=>{
+    const total = d.length;
+    if(!total) return '';
+    const done = d.filter(p => {
+      const sl = (p.status||'').toLowerCase();
+      return sl.includes('done') || sl.includes('complete') || sl.includes('closed') || sl.includes('verified') || sl.includes('on prod') || sl.includes('resolved');
+    }).length;
+    const inProg = d.filter(p => {
+      const sl=(p.status||'').toLowerCase();
+      return sl.includes('progress') || sl.includes('dev complete');
+    }).length;
+    const notStarted = total - done - inProg;
+    const completionPct = Math.round((done/total)*100);
+    const onTrackOrDone = d.filter(p => {
+      const sl=(p.status||'').toLowerCase();
+      if(sl.includes('done')||sl.includes('complete')||sl.includes('closed')||sl.includes('verified')||sl.includes('on prod')||sl.includes('resolved')) return true;
+      return computeRisk(p).level === null;
+    }).length;
+    const deliveryHealth = Math.round((onTrackOrDone/total)*100);
+    const healthColor = deliveryHealth>=80?'var(--success)':deliveryHealth>=50?'var(--warning)':'var(--danger)';
+    const completionColor = completionPct>=80?'var(--success)':completionPct>=40?'var(--warning)':'var(--danger)';
+    const withLOE = d.filter(p=>p.loe>0);
+    const avgProgress = withLOE.length ? Math.round(withLOE.reduce((a,p)=>a+pct(p.loe,p.rem),0)/withLOE.length) : 0;
+    const upcoming = d
+      .filter(p => p.devBy && p.devBy !== '—')
+      .map(p => ({ ...p, ms: new Date(p.devBy).getTime() }))
+      .filter(p => p.ms >= Date.now())
+      .sort((a,b) => a.ms - b.ms)[0];
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:18px 24px;margin-bottom:20px;box-shadow:var(--shadow-sm);">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;"><i class="ti ti-target" style="color:var(--primary);font-size:16px;"></i>Strategic Initiative Completion</div>'
+      + '<span style="font-size:11px;color:var(--text-3);">' + total + ' initiatives tracked</span></div>'
+      + '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:16px;align-items:center;">'
+      + '<div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Overall Completion</div>'
+      + '<div style="display:flex;align-items:center;gap:10px;"><div style="flex:1;height:10px;background:var(--border);border-radius:10px;overflow:hidden;max-width:220px;"><div style="height:100%;border-radius:10px;background:' + completionColor + ';width:' + completionPct + '%;transition:width .5s ease;"></div></div>'
+      + '<span style="font-size:20px;font-weight:800;color:' + completionColor + ';line-height:1;">' + completionPct + '%</span></div>'
+      + '<div style="margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;">'
+      + '<span style="font-size:11px;color:var(--success);font-weight:600;"><span style="font-size:13px;font-weight:800;">' + done + '</span> Done</span>'
+      + '<span style="font-size:11px;color:var(--primary);font-weight:600;"><span style="font-size:13px;font-weight:800;">' + inProg + '</span> In Progress</span>'
+      + '<span style="font-size:11px;color:var(--text-3);font-weight:600;"><span style="font-size:13px;font-weight:800;">' + notStarted + '</span> Not Started</span></div></div>'
+      + '<div style="text-align:center;padding:10px 8px;background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);">'
+      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Delivery Health</div>'
+      + '<div style="font-size:26px;font-weight:800;color:' + healthColor + ';line-height:1;">' + deliveryHealth + '%</div>'
+      + '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">on track or done</div></div>'
+      + '<div style="text-align:center;padding:10px 8px;background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);">'
+      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Avg Progress</div>'
+      + '<div style="font-size:26px;font-weight:800;color:var(--text);line-height:1;">' + avgProgress + '%</div>'
+      + '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">hrs logged / estimated</div></div>'
+      + '<div style="text-align:center;padding:10px 8px;background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);">'
+      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Next Deadline</div>'
+      + (upcoming
+          ? '<div style="font-size:15px;font-weight:800;color:var(--text);line-height:1.2;">' + new Date(upcoming.devBy).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + '</div><div style="font-size:10px;color:var(--text-3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + upcoming.summary + '">' + (upcoming.summary.length>22?upcoming.summary.slice(0,20)+'…':upcoming.summary) + '</div>'
+          : '<div style="font-size:15px;font-weight:700;color:var(--text-3);">None set</div>')
+      + '</div></div></div>';
+  })()}
+
+  <div class="table-wrap"><table style="table-layout:fixed;width:100%;">
+    <colgroup>
+      <col style="width:28px;">
+      <col style="width:90px;">
+      <col style="width:200px;">
+      <col style="width:80px;">
+      <col style="width:68px;">
+      <col style="width:62px;">
+      <col style="width:90px;">
+      <col style="width:72px;">
+      <col style="width:68px;">
+      <col style="width:96px;">
+      <col style="width:110px;">
+      <col style="width:76px;">
+    </colgroup>
+    <thead><tr>
+      <th></th>
+      <th>Key</th><th>Summary</th><th>Type</th>
+      <th>LOE (hrs)</th><th>Rem.</th>
+      <th class="th-sort${projSort.col==='progress'?' sorted':''}" onclick="sortProjects('progress')">Progress<span class="sort-icon"><i class="ti ti-${projSort.col==='progress'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th class="th-sort${projSort.col==='devBy'?' sorted':''}" onclick="sortProjects('devBy')">Dev By<span class="sort-icon"><i class="ti ti-${projSort.col==='devBy'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th class="th-sort${projSort.col==='goLive'?' sorted':''}" onclick="sortProjects('goLive')">Go-Live<span class="sort-icon"><i class="ti ti-${projSort.col==='goLive'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th>Status</th><th>Assignee(s)</th>
+      <th class="th-sort${projSort.col==='risk'?' sorted':''}" onclick="sortProjects('risk')">Risk<span class="sort-icon"><i class="ti ti-${projSort.col==='risk'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+    </tr></thead>
+    <tbody id="projBody">`;
+
+  // ── Sort initiatives ───────────────────────────────────────────────────────
+  const riskOrder = { red: 0, amber: 1, null: 2 };
+  const sortedData = [...d].sort((a, b) => {
+    if(!projSort.col) return 0;
+    let av, bv;
+    if(projSort.col === 'progress') {
+      av = a.loe > 0 ? (a.loe - a.rem) / a.loe : 0;
+      bv = b.loe > 0 ? (b.loe - b.rem) / b.loe : 0;
+    } else if(projSort.col === 'devBy') {
+      av = a.devBy && a.devBy !== '—' ? new Date(a.devBy).getTime() : Infinity;
+      bv = b.devBy && b.devBy !== '—' ? new Date(b.devBy).getTime() : Infinity;
+    } else if(projSort.col === 'goLive') {
+      av = a.goLive && a.goLive !== '—' ? new Date(a.goLive).getTime() : Infinity;
+      bv = b.goLive && b.goLive !== '—' ? new Date(b.goLive).getTime() : Infinity;
+    } else if(projSort.col === 'risk') {
+      av = riskOrder[computeRisk(a).level] ?? 2;
+      bv = riskOrder[computeRisk(b).level] ?? 2;
+    }
+    return av === bv ? 0 : (av < bv ? -1 : 1) * projSort.dir;
+  });
+
+  // ── Build display list: groups + ungrouped initiatives ─────────────────────
+  const groups = S.groups || [];
+  // Build a set of all keys that belong to any group
+  const groupedKeys = new Set(groups.flatMap(g => g.keys));
+
+  // Build display items: { type:'group', group, members } | { type:'init', p }
+  const displayItems = [];
+  const usedGroupIndexes = new Set();
+
+  sortedData.forEach(p => {
+    if(groupedKeys.has(p.key)) {
+      // Find which group this belongs to
+      const gi = groups.findIndex(g => g.keys.includes(p.key));
+      if(gi !== -1 && !usedGroupIndexes.has(gi)) {
+        usedGroupIndexes.add(gi);
+        const members = groups[gi].keys
+          .map(k => sortedData.find(x => x.key === k))
+          .filter(Boolean);
+        displayItems.push({ type: 'group', group: groups[gi], members, gi });
+      }
+      // Skip individual row (it's rendered inside the group)
+    } else {
+      displayItems.push({ type: 'init', p });
+    }
+  });
+
+  displayItems.forEach((item, di) => {
+    if(item.type === 'group') {
+      // ── Group folder row (roll-up of all members) ──────────────────────────
+      const { group, members, gi } = item;
+      const gLOE = Math.round(members.reduce((a,m)=>a+m.loe,0)*10)/10;
+      const gRem = Math.round(members.reduce((a,m)=>a+m.rem,0)*10)/10;
+      const gAssignees = [...new Set(members.flatMap(m=>m.assignees))];
+      const gAssigneeStr = gAssignees.slice(0,3).join(', ')+(gAssignees.length>3?' +'+(gAssignees.length-3):'');
+      const gDevBy = members.map(m=>m.devBy).filter(d=>d&&d!=='—').sort()[0] || '—';
+      const gGoLive = members.map(m=>m.goLive).filter(d=>d&&d!=='—').sort().pop() || '—';
+      const gStatus = members.some(m=>(m.status||'').toLowerCase().includes('progress')) ? 'In Progress'
+        : members.every(m=>(m.status||'').toLowerCase().includes('done')) ? 'Done'
+        : members[0]?.status || '—';
+      const gRiskInfos = members.map(m=>computeRisk(m));
+      const gRiskLevel = gRiskInfos.some(r=>r.level==='red') ? 'red'
+        : gRiskInfos.some(r=>r.level==='amber') ? 'amber' : null;
+      const gRiskCell = gRiskLevel
+        ? `<td style="white-space:nowrap;">
+             <a class="risk-badge-inline rbi-${gRiskLevel}" onclick="goToRisk('${members[0]?.key}','${gRiskLevel}')" href="javascript:void(0)">
+               <i class="ti ti-alert-triangle" style="font-size:10px;"></i>${gRiskLevel==='red'?'CRITICAL':'AT RISK'}
+             </a>
+           </td>`
+        : `<td><span class="risk-badge-inline" style="background:var(--success-bg);color:var(--success-text);border:1px solid rgba(29,158,117,0.2);"><i class="ti ti-circle-check" style="font-size:10px;"></i>ON TRACK</span></td>`;
+
+      html += `<tr class="init-row" data-s="${group.name.toLowerCase()}" data-st="${gStatus.toLowerCase()}" style="background:var(--surface);">
+        <td colspan="2" style="padding-left:8px;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button class="expand-btn" id="btn-group-${gi}" onclick="toggleAccordion('group-${gi}', this)" aria-expanded="false">${CHEVRON}</button>
+            <i class="ti ti-folders" style="color:#1C51E1;font-size:15px;flex-shrink:0;margin-left:2px;"></i>
+            <span style="font-weight:700;font-size:13px;margin-left:4px;color:var(--text);white-space:nowrap;">${group.name}</span>
+          </div>
+        </td>
+        <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;color:var(--text-2);font-size:12px;" title="${members.map(m=>m.key).join(', ')}">${members.length} initiatives · ${members.map(m=>m.key).join(', ')}</td>
+        <td><span class="badge b-purple" style="background:#EEF2FD;color:#1C51E1;">Group</span></td>
+        <td style="font-weight:600;">${gLOE||'—'}</td>
+        <td style="font-weight:600;color:${gRem>0?'var(--text)':'var(--text-3)'}">${gRem||'0'}</td>
+        <td>${progressCell(gLOE,gRem)}</td>
+        <td style="white-space:nowrap;font-size:12px;">${shortDate(gDevBy)}</td>
+        <td style="white-space:nowrap;font-size:12px;">${shortDate(gGoLive)||'—'}</td>
+        <td>${statusBadge(gStatus)}</td>
+        <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;" title="${gAssigneeStr}">${gAssigneeStr}</td>
+        ${gRiskCell}
+      </tr>`;
+
+      // ── Member initiative rows (children of group) ─────────────────────────
+      members.forEach((p, pi) => {
+        const epics = p.children.filter(c=>(c.type||'').toLowerCase().includes('epic'));
+        const allTickets = p.children.filter(c=>!(c.type||'').toLowerCase().includes('epic'));
+        const hasChildren = epics.length > 0 || allTickets.length > 0;
+        const assigneeStr = p.assignees.slice(0,3).join(', ')+(p.assignees.length>3?' +'+(p.assignees.length-3):'');
+        const riskInfo = computeRisk(p);
+        const riskCell = riskInfo.level
+          ? `<td style="white-space:nowrap;"><a class="risk-badge-inline rbi-${riskInfo.level}" onclick="goToRisk('${p.key}','${riskInfo.level}')" href="javascript:void(0)"><i class="ti ti-alert-triangle" style="font-size:10px;"></i>${riskInfo.level==='red'?'CRITICAL':'AT RISK'}</a></td>`
+          : (!(p.status||'').toLowerCase().includes('done')
+              ? `<td><span class="risk-badge-inline" style="background:var(--success-bg);color:var(--success-text);border:1px solid rgba(29,158,117,0.2);"><i class="ti ti-circle-check" style="font-size:10px;"></i>ON TRACK</span></td>`
+              : `<td><span style="font-size:11px;color:var(--text-3);">—</span></td>`);
+        const memberId = `gmember-${gi}-${pi}`;
+        html += `<tr class="accordion-row level-epic" data-group="group-${gi}" data-s="${p.summary.toLowerCase()}" data-st="${(p.status||'').toLowerCase()}" style="display:none;">
+          <td colspan="2" style="padding-left:28px;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              ${hasChildren ? `<button class="expand-btn" id="btn-${memberId}" onclick="toggleAccordion('${memberId}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
+              <i class="ti ti-folder" style="color:#1C51E1;font-size:14px;flex-shrink:0;margin-left:2px;"></i>
+              <a href="https://${domain}/browse/${p.key}" target="_blank" style="font-weight:600;font-size:12px;margin-left:4px;white-space:nowrap;">${p.key}</a>
+            </div>
+          </td>
+          <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;font-size:12px;" title="${p.summary}">${p.summary}</td>
+          <td><span class="badge b-purple">Initiative</span></td>
+          <td style="font-weight:600;font-size:12px;">${p.loe||'—'}</td>
+          <td style="font-weight:600;font-size:12px;color:${p.rem>0?'var(--text)':'var(--text-3)'}">${p.rem||'0'}</td>
+          <td>${progressCell(p.loe,p.rem)}</td>
+          <td style="white-space:nowrap;font-size:12px;">${shortDate(p.devBy)}</td>
+          <td style="white-space:nowrap;font-size:12px;">${shortDate(p.goLive)||'—'}</td>
+          <td>${statusBadge(p.status)}</td>
+          <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;" title="${assigneeStr}">${assigneeStr}</td>
+          ${riskCell}
+        </tr>`;
+
+        epics.forEach((ep,ei)=>{
+          const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
+          const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
+          const ticketLogged = epicTickets.reduce((a,t)=>a+(t.isDone ? t.loe : (t.logged||0)),0);
+          const epicLOE = ticketLOE > 0 ? ticketLOE : ep.loe;
+          const epicLogged = ticketLOE > 0 ? ticketLogged : (ep.logged||0);
+          const epPct = epicLOE>0 ? Math.min(100,Math.round(epicLogged/epicLOE*100)) : 0;
+          const epicRem = epicLOE > 0 ? Math.max(0, Math.round((epicLOE - epicLogged)*10)/10) : 0;
+          const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epPct}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${epPct}%</span></div>` : '—';
+          html+=`<tr class="accordion-row level-epic" data-group="${memberId}" data-s="${ep.summary.toLowerCase()}" data-st="${(ep.status||'').toLowerCase()}" style="display:none;">
+            <td colspan="2" style="padding-left:56px;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                ${epicTickets.length>0 ? `<button class="expand-btn" id="btn-gep-${gi}-${pi}-${ep.key}" onclick="toggleAccordion('gep-${gi}-${pi}-${ep.key}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
+                <i class="ti ti-folders" style="color:#D97706;font-size:13px;flex-shrink:0;margin-left:2px;"></i>
+                <a href="https://${domain}/browse/${ep.key}" target="_blank" style="font-size:12px;margin-left:4px;white-space:nowrap;">${ep.key}</a>
+              </div>
+            </td>
+            <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${ep.summary}">${ep.summary}</td>
+            <td><span class="badge b-amber">Epic</span></td>
+            <td style="font-size:12px;">${epicLOE||'—'}</td>
+            <td style="font-size:12px;color:${epicRem>0?'var(--text)':'var(--text-3)'};">${epicRem||'0'}</td>
+            <td>${epBar}</td>
+            <td style="font-size:12px;color:var(--text-3);">—</td>
+            <td style="font-size:12px;color:var(--text-3);">—</td>
+            <td>${statusBadge(ep.status)}</td>
+            <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ep.assignee}</td>
+            <td></td>
+          </tr>`;
+          epicTickets.forEach(t=>{
+            const tPct = t.isDone ? 100 : (t.loe>0 ? Math.min(100,Math.round((t.logged||0)/t.loe*100)) : 0);
+            const isBug = (t.type||'').toLowerCase().includes('bug');
+            const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
+            const fileIcon = isBug ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>` : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
+            const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
+            const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
+            html+=`<tr class="accordion-row level-ticket" data-group="gep-${gi}-${pi}-${ep.key}" data-s="${t.summary.toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
+              <td colspan="2" style="padding-left:84px;">
+                <div style="display:flex;align-items:center;gap:5px;">
+                  <span style="width:20px;flex-shrink:0;"></span>
+                  ${fileIcon}
+                  <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
+                </div>
+              </td>
+              <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
+              <td>${typeBadge}</td>
+              <td style="font-size:12px;">${t.loe||'—'}</td>
+              <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
+              <td>${tBar}</td>
+              <td style="font-size:12px;color:var(--text-3);">—</td>
+              <td style="font-size:12px;color:var(--text-3);">—</td>
+              <td>${statusBadge(t.status)}</td>
+              <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.assignee}</td>
+              <td></td>
+            </tr>`;
+          });
+        });
+
+        const orphans = allTickets.filter(t=>!t.parentKey||!epics.find(e=>e.key===t.parentKey));
+        orphans.forEach(t=>{
+          const tPct = t.isDone ? 100 : (t.loe>0 ? Math.min(100,Math.round((t.logged||0)/t.loe*100)) : 0);
+          const isBug = (t.type||'').toLowerCase().includes('bug');
+          const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
+          const fileIcon = isBug ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>` : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
+          const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
+          const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
+          html+=`<tr class="accordion-row level-ticket" data-group="${memberId}" data-s="${t.summary.toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
+            <td colspan="2" style="padding-left:56px;">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <span style="width:20px;flex-shrink:0;"></span>
+                ${fileIcon}
+                <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
+              </div>
+            </td>
+            <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
+            <td>${typeBadge}</td>
+            <td style="font-size:12px;">${t.loe||'—'}</td>
+            <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
+            <td>${tBar}</td>
+            <td style="font-size:12px;color:var(--text-3);">—</td>
+            <td style="font-size:12px;color:var(--text-3);">—</td>
+            <td>${statusBadge(t.status)}</td>
+            <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.assignee}</td>
+            <td></td>
+          </tr>`;
+        });
+      });
+
+    } else {
+      // ── Regular initiative row (ungrouped) ─────────────────────────────────
+      const p = item.p;
+      const pi = di; // use display index for unique IDs
+    const epics = p.children.filter(c=>(c.type||'').toLowerCase().includes('epic'));
+    const allTickets = p.children.filter(c=>!(c.type||'').toLowerCase().includes('epic'));
+    const hasChildren = epics.length > 0 || allTickets.length > 0;
+    const assigneeStr = p.assignees.slice(0,3).join(', ')+(p.assignees.length>3?' +'+(p.assignees.length-3):'');
+    const riskInfo = computeRisk(p);
+    const riskCell = riskInfo.level
+      ? `<td style="white-space:nowrap;">
+           <a class="risk-badge-inline rbi-${riskInfo.level}" onclick="goToRisk('${p.key}','${riskInfo.level}')" href="javascript:void(0)">
+             <i class="ti ti-alert-triangle" style="font-size:10px;"></i>${riskInfo.level==='red'?'CRITICAL':'AT RISK'}
+           </a>
+         </td>`
+      : (!(p.status||'').toLowerCase().includes('done')
+          ? `<td><span class="risk-badge-inline" style="background:var(--success-bg);color:var(--success-text);border:1px solid rgba(29,158,117,0.2);"><i class="ti ti-circle-check" style="font-size:10px;"></i>ON TRACK</span></td>`
+          : `<td><span style="font-size:11px;color:var(--text-3);">—</span></td>`);
+
+    html+=`<tr class="init-row" data-s="${p.summary.toLowerCase()}" data-st="${(p.status||'').toLowerCase()}" style="background:var(--surface);">
+      <td colspan="2" style="padding-left:8px;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          ${hasChildren ? `<button class="expand-btn" id="btn-init-${pi}" onclick="toggleAccordion('init-${pi}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
+          <i class="ti ti-folder" style="color:#1C51E1;font-size:15px;flex-shrink:0;margin-left:2px;"></i>
+          <a href="https://${domain}/browse/${p.key}" target="_blank" style="font-weight:600;font-size:13px;margin-left:4px;white-space:nowrap;">${p.key}</a>
+        </div>
+      </td>
+      <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${p.summary}">${p.summary}</td>
+      <td><span class="badge b-purple">Initiative</span></td>
+      <td style="font-weight:600;">${p.loe||'—'}</td>
+      <td style="font-weight:600;color:${p.rem>0?'var(--text)':'var(--text-3)'}">${p.rem||'0'}</td>
+      <td>${progressCell(p.loe,p.rem)}</td>
+      <td style="white-space:nowrap;font-size:12px;">${shortDate(p.devBy)}</td>
+      <td style="white-space:nowrap;font-size:12px;">${shortDate(p.goLive)||'—'}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;" title="${assigneeStr}">${assigneeStr}</td>
+      ${riskCell}
+    </tr>`;
+
+    epics.forEach((ep,ei)=>{
+      const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
+      const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
+      const ticketLogged = epicTickets.reduce((a,t)=>a+(t.isDone ? t.loe : (t.logged||0)),0);
+      const epicLOE = ticketLOE > 0 ? ticketLOE : ep.loe;
+      const epicLogged = ticketLOE > 0 ? ticketLogged : (ep.logged||0);
+      const epPct = epicLOE>0 ? Math.min(100,Math.round(epicLogged/epicLOE*100)) : 0;
+      const epicRem = epicLOE > 0 ? Math.max(0, Math.round((epicLOE - epicLogged)*10)/10) : 0;
+      const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epPct}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${epPct}%</span></div>` : '—';
+
+      html+=`<tr class="accordion-row level-epic" data-group="init-${pi}" data-s="${ep.summary.toLowerCase()}" data-st="${(ep.status||'').toLowerCase()}" style="display:none;">
+        <td colspan="2" style="padding-left:32px;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            ${epicTickets.length>0 ? `<button class="expand-btn" id="btn-epic-${pi}-${ep.key}" onclick="toggleAccordion('epic-${pi}-${ep.key}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
+            <i class="ti ti-folders" style="color:#D97706;font-size:13px;flex-shrink:0;margin-left:2px;"></i>
+            <a href="https://${domain}/browse/${ep.key}" target="_blank" style="font-size:12px;margin-left:4px;white-space:nowrap;">${ep.key}</a>
+          </div>
+        </td>
+        <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${ep.summary}">${ep.summary}</td>
+        <td><span class="badge b-amber">Epic</span></td>
+        <td style="font-size:12px;">${epicLOE||'—'}</td>
+        <td style="font-size:12px;color:${epicRem>0?'var(--text)':'var(--text-3)'};">${epicRem||'0'}</td>
+        <td>${epBar}</td>
+        <td style="font-size:12px;color:var(--text-3);">—</td>
+        <td style="font-size:12px;color:var(--text-3);">—</td>
+        <td>${statusBadge(ep.status)}</td>
+        <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ep.assignee}</td>
+        <td></td>
+      </tr>`;
+
+      epicTickets.forEach(t=>{
+        const tPct = t.isDone ? 100 : (t.loe>0 ? Math.min(100,Math.round((t.logged||0)/t.loe*100)) : 0);
+        const isBug = (t.type||'').toLowerCase().includes('bug');
+        const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
+        const fileIcon = isBug
+          ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>`
+          : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
+        const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
+      const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
+        html+=`<tr class="accordion-row level-ticket" data-group="epic-${pi}-${ep.key}" data-s="${t.summary.toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
+          <td colspan="2" style="padding-left:60px;">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span style="width:20px;flex-shrink:0;"></span>
+              ${fileIcon}
+              <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
+            </div>
+          </td>
+          <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
+          <td>${typeBadge}</td>
+          <td style="font-size:12px;">${t.loe||'—'}</td>
+          <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
+          <td>${tBar}</td>
+          <td style="font-size:12px;color:var(--text-3);">—</td>
+          <td style="font-size:12px;color:var(--text-3);">—</td>
+          <td>${statusBadge(t.status)}</td>
+          <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.assignee}</td>
+          <td></td>
+        </tr>`;
+      });
+    });
+
+    // Orphan tickets not under any epic
+    const orphans = allTickets.filter(t=>!t.parentKey||!epics.find(e=>e.key===t.parentKey));
+    orphans.forEach(t=>{
+      const tPct = t.isDone ? 100 : (t.loe>0 ? Math.min(100,Math.round((t.logged||0)/t.loe*100)) : 0);
+      const isBug = (t.type||'').toLowerCase().includes('bug');
+      const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
+      const fileIcon = isBug
+        ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>`
+        : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
+      const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
+      const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
+      html+=`<tr class="accordion-row level-ticket" data-group="init-${pi}" data-s="${t.summary.toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
+        <td colspan="2" style="padding-left:32px;">
+          <div style="display:flex;align-items:center;gap:5px;">
+            <span style="width:20px;flex-shrink:0;"></span>
+            ${fileIcon}
+            <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
+          </div>
+        </td>
+        <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
+        <td>${typeBadge}</td>
+        <td style="font-size:12px;">${t.loe||'—'}</td>
+        <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
+        <td>${tBar}</td>
+        <td style="font-size:12px;color:var(--text-3);">—</td>
+        <td style="font-size:12px;color:var(--text-3);">—</td>
+        <td>${statusBadge(t.status)}</td>
+        <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.assignee}</td>
+        <td></td>
+      </tr>`;
+    });
+    } // end else (ungrouped)
+  }); // end displayItems.forEach
+
+  html+='</tbody></table></div>';
+  document.getElementById('projectsContent').innerHTML=html;
+}
+
+
+function toggleAccordion(groupId, btn) {
+  const rows = document.querySelectorAll(`tr[data-group="${groupId}"]`);
+  const isOpen = btn.getAttribute('aria-expanded') === 'true';
+  // Find the parent init-row to toggle shading
+  const parentRow = btn.closest('tr');
+
+  if(isOpen) {
+    rows.forEach(r => {
+      r.querySelectorAll('.expand-btn[aria-expanded="true"]').forEach(nestedBtn => {
+        const nestedGroup = nestedBtn.id.replace('btn-','');
+        document.querySelectorAll(`tr[data-group="${nestedGroup}"]`).forEach(nr => nr.style.display='none');
+        nestedBtn.setAttribute('aria-expanded','false');
+        // Remove shading from any nested init rows
+        nestedBtn.closest('tr')?.classList.remove('is-open');
+      });
+      r.style.display = 'none';
+    });
+    btn.setAttribute('aria-expanded','false');
+    parentRow?.classList.remove('is-open');
+  } else {
+    rows.forEach((r,i) => {
+      r.style.display = '';
+      r.style.opacity = '0';
+      r.style.transform = 'translateY(-5px)';
+      r.style.transition = `opacity 0.15s ease ${i*0.025}s, transform 0.15s ease ${i*0.025}s`;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          r.style.opacity = '1';
+          r.style.transform = 'translateY(0)';
+        });
+      });
+    });
+    btn.setAttribute('aria-expanded','true');
+    parentRow?.classList.add('is-open');
+  }
+}
+
+
+function filterProjTable(){
+  const q=(document.getElementById('srch')?.value||'').toLowerCase();
+  const sf=(document.getElementById('sfilt')?.value||'').toLowerCase();
+  document.querySelectorAll('#projBody tr').forEach(r=>{ r.style.display=(!q||r.dataset.s?.includes(q))&&(!sf||r.dataset.st?.includes(sf))?'':'none'; });
+}
+
+function renderHaltedTab(){
+  const halted = S.data.filter(p => (p.status||'').toLowerCase().includes('halted'));
+  const domain = S.domain.includes('localhost') ? 'summitk12.atlassian.net' : S.domain;
+  // Update tab badge
+  const countEl = document.getElementById('haltedCount');
+  if(countEl) { countEl.textContent = halted.length; countEl.style.display = halted.length ? 'inline' : 'none'; }
+
+  if(!halted.length) {
+    document.getElementById('haltedContent').innerHTML = '<div class="empty-state"><i class="ti ti-circle-check" style="color:var(--success);"></i><div class="empty-title">No halted initiatives</div><div class="empty-sub">All initiatives are active.</div></div>';
+    return;
+  }
+
+  const totLOE = Math.round(halted.reduce((a,p)=>a+p.loe,0));
+  const totRem = Math.round(halted.reduce((a,p)=>a+p.rem,0));
+
+  const CHEVRON = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  let html = `
+  <div class="metrics" style="margin-bottom:20px;">
+    <div class="metric">
+      <div class="metric-label">Halted Initiatives</div>
+      <div class="metric-value" style="color:#9A5C2A;">${halted.length}</div>
+      <div class="metric-sub">${halted.reduce((a,p)=>a+p.childCount,0)} child issues paused</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">LOE On Hold (hrs)</div>
+      <div class="metric-value">${totLOE.toLocaleString()}</div>
+      <div class="metric-sub">original estimate</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Remaining (hrs)</div>
+      <div class="metric-value">${totRem.toLocaleString()}</div>
+      <div class="metric-sub">work not yet started</div>
+    </div>
+  </div>
+  <div class="table-wrap"><table style="table-layout:fixed;width:100%;">
+    <colgroup>
+      <col style="width:28px;">
+      <col style="width:90px;">
+      <col style="width:200px;">
+      <col style="width:80px;">
+      <col style="width:68px;">
+      <col style="width:62px;">
+      <col style="width:90px;">
+      <col style="width:72px;">
+      <col style="width:68px;">
+      <col style="width:96px;">
+      <col style="width:110px;">
+    </colgroup>
+    <thead><tr>
+      <th></th>
+      <th>Key</th><th>Summary</th><th>Type</th>
+      <th>LOE (hrs)</th><th>Rem.</th><th>Progress</th><th>Dev By</th><th>Go-Live</th><th>Status</th><th>Assignee(s)</th>
+    </tr></thead>
+    <tbody>`;
+
+  halted.forEach((p, pi) => {
+    const epics = p.children.filter(c=>(c.type||'').toLowerCase().includes('epic'));
+    const allTickets = p.children.filter(c=>!(c.type||'').toLowerCase().includes('epic'));
+    const hasChildren = epics.length > 0 || allTickets.length > 0;
+    const assigneeStr = p.assignees.slice(0,3).join(', ')+(p.assignees.length>3?' +'+(p.assignees.length-3):'');
+    const groupId = `halted-init-${pi}`;
+
+    html+=`<tr class="init-row" style="background:var(--surface);">
+      <td colspan="2" style="padding-left:8px;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          ${hasChildren ? `<button class="expand-btn" id="btn-${groupId}" onclick="toggleAccordion('${groupId}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
+          <i class="ti ti-folder" style="color:#9A5C2A;font-size:15px;flex-shrink:0;margin-left:2px;"></i>
+          <a href="https://${domain}/browse/${p.key}" target="_blank" style="font-weight:600;font-size:13px;margin-left:4px;white-space:nowrap;">${p.key}</a>
+        </div>
+      </td>
+      <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${p.summary}">${p.summary}</td>
+      <td><span class="badge b-purple">Initiative</span></td>
+      <td style="font-weight:600;">${p.loe||'—'}</td>
+      <td style="font-weight:600;color:${p.rem>0?'var(--text)':'var(--text-3)'}">${p.rem||'0'}</td>
+      <td>${progressCell(p.loe,p.rem)}</td>
+      <td style="white-space:nowrap;font-size:12px;">${shortDate(p.devBy)}</td>
+      <td style="white-space:nowrap;font-size:12px;">${shortDate(p.goLive)||'—'}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${assigneeStr}">${assigneeStr}</td>
+    </tr>`;
+
+    epics.forEach((ep,ei) => {
+      const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
+      const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
+      const ticketLogged = epicTickets.reduce((a,t)=>a+(t.isDone ? t.loe : (t.logged||0)),0);
+      const epicLOE = ticketLOE > 0 ? ticketLOE : ep.loe;
+      const epicLogged = ticketLOE > 0 ? ticketLogged : (ep.logged||0);
+      const epPct = epicLOE>0 ? Math.min(100,Math.round(epicLogged/epicLOE*100)) : 0;
+      const epicRem = epicLOE > 0 ? Math.max(0, Math.round((epicLOE - epicLogged)*10)/10) : 0;
+      const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:40px;"><div class="progress-fill" style="width:${epPct}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:26px;">${epPct}%</span></div>` : '—';
+      const epicGroupId = `halted-epic-${pi}-${ep.key}`;
+
+      html+=`<tr class="accordion-row level-epic" data-group="${groupId}" style="display:none;">
+        <td colspan="2" style="padding-left:32px;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            ${epicTickets.length>0 ? `<button class="expand-btn" id="btn-${epicGroupId}" onclick="toggleAccordion('${epicGroupId}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
+            <i class="ti ti-folders" style="color:#D97706;font-size:13px;flex-shrink:0;margin-left:2px;"></i>
+            <a href="https://${domain}/browse/${ep.key}" target="_blank" style="font-size:12px;margin-left:4px;white-space:nowrap;">${ep.key}</a>
+          </div>
+        </td>
+        <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${ep.summary}">${ep.summary}</td>
+        <td><span class="badge b-amber">Epic</span></td>
+        <td style="font-size:12px;">${epicLOE||'—'}</td>
+        <td style="font-size:12px;color:${epicRem>0?'var(--text)':'var(--text-3)'};">${epicRem||'0'}</td>
+        <td>${epBar}</td>
+        <td style="font-size:12px;color:var(--text-3);">—</td>
+        <td style="font-size:12px;color:var(--text-3);">—</td>
+        <td>${statusBadge(ep.status)}</td>
+        <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;">${ep.assignee}</td>
+      </tr>`;
+    });
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('haltedContent').innerHTML = html;
+}
+
+// ── Gantt v2: drag-and-drop, assignee × initiative rollup ──────────────────
+
+// Saved positions: { "[engName]||[initKey]": offsetWeeks } — stored in S.ganttOffsets
+
+const GANTT_COLORS = ['#534AB7','#1D9E75','#D85A30','#D4537E','#378ADD','#BA7517','#639922','#7F77DD','#5C8E4A','#9C4585'];
+const GANTT_HR_PER_DAY = 8; // assumed dev hours per day
+
+function ganttHoursToWeeks(hrs, zoom) {
+  // Spread LOE hours over weeks assuming 8h/day, 5 days/week = 40h/week
+  const raw = hrs > 0 ? hrs / 40 : 0.5;
+  // Cap at ~half the visible timeline, min 0.5
+  return Math.min(Math.max(raw, 0.5), zoom * 0.6);
+}
+
+function buildEngMap(data) {
+  const map = {}; // { engName: { color, initMap: { initKey: { summary, loe, rem, status, tickets[] } } } }
+  let ci = 0;
+  data.forEach(initiative => {
+    const initKey = initiative.key;
+    const initSummary = initiative.summary;
+    const tickets = initiative.children || [];
+
+    // Group non-epic children by assignee
+    const nonEpicTickets = tickets.filter(t => !(t.type||'').toLowerCase().includes('epic'));
+    nonEpicTickets.forEach(ticket => {
+      const assignee = ticket.assignee && ticket.assignee !== '—' ? ticket.assignee : null;
+      if(!assignee) return;
+      if(!map[assignee]) { map[assignee] = { color: GANTT_COLORS[ci++ % GANTT_COLORS.length], initMap: {} }; }
+      if(!map[assignee].initMap[initKey]) {
+        map[assignee].initMap[initKey] = { summary: initSummary, initKey, loe: 0, rem: 0, status: initiative.status, tickets: [] };
+      }
+      map[assignee].initMap[initKey].loe += ticket.loe || 0;
+      map[assignee].initMap[initKey].rem += ticket.remaining || 0;
+      map[assignee].initMap[initKey].tickets.push(ticket);
+    });
+  });
+  // Round
+  Object.values(map).forEach(eng => {
+    Object.values(eng.initMap).forEach(b => {
+      b.loe = Math.round(b.loe * 10) / 10;
+      b.rem = Math.round(b.rem * 10) / 10;
+    });
+  });
+  return map;
+}
+
+function renderGanttTab() {
+  const d = S.data;
+  const domain = (S.domain||'').replace(/^https?:\/\//,'').replace(/\/$/,'') || 'summitk12.atlassian.net';
+  const jiraBase = 'https://' + (domain.includes('localhost') ? 'summitk12.atlassian.net' : (domain || 'summitk12.atlassian.net'));
+
+  if(!d.length) {
+    document.getElementById('ganttContent').innerHTML = '<div class="empty-state"><i class="ti ti-calendar-stats"></i><div class="empty-sub">Sync Jira data to see timeline.</div></div>';
+    return;
+  }
+
+  const zoom = S.ganttZoom || 16;
+  const now = new Date(); now.setHours(0,0,0,0);
+  const engMap = buildEngMap(d);
+  const allEngs = Object.keys(engMap).sort();
+  if(!S.ganttActiveEngs) S.ganttActiveEngs = [];
+  const activeEngs = S.ganttActiveEngs;
+
+  const monday = new Date(now);
+  monday.setDate(monday.getDate() - monday.getDay() + 1);
+  const weeks = [];
+  for(let i = 0; i < zoom; i++) {
+    const dt = new Date(monday); dt.setDate(dt.getDate() + i * 7);
+    weeks.push({ date: dt, label: dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}) });
+  }
+  const totalMs = zoom * 7 * 86400000;
+  const todayFrac = Math.max(0, Math.min(1, (now - monday) / totalMs));
+  const todayStr = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+
+  const MAX_PILLS = 14;
+  const visiblePills = allEngs.slice(0, MAX_PILLS);
+  const hiddenPills  = allEngs.slice(MAX_PILLS);
+
+  const makePill = (a, hidden) => {
+    const isActive = activeEngs.includes(a.toLowerCase());
+    return `<button class="gantt-person-pill${isActive?' active':''}${hidden?' gantt-pill-hidden':''}" onclick="toggleGanttPerson('${a.toLowerCase().replace(/'/g,"\\'")}',event)" data-eng="${a.toLowerCase()}" ${hidden?'style="display:none;"':''}>
+      <span class="gantt-person-dot" style="background:${engMap[a].color};"></span>${a}
+    </button>`;
+  };
+
+  const pillsHtml = visiblePills.map(a => makePill(a,false)).join('')
+    + hiddenPills.map(a => makePill(a,true)).join('')
+    + (hiddenPills.length ? `<button class="gantt-show-all" id="ganttShowAllBtn" onclick="ganttToggleShowAll(this)">Show all (${hiddenPills.length} more)</button>` : '');
+
+  const engsToShow = activeEngs.length > 0 ? allEngs.filter(e => activeEngs.includes(e.toLowerCase())) : allEngs;
+
+  const html = `
+<div class="gantt-wrap">
+  <div class="gantt-toolbar">
+    <div class="gantt-toolbar-row1">
+      <div class="gantt-toolbar-row1-left">
+        <div class="gantt-multiselect" id="ganttMultiselect">
+          <div class="gantt-ms-trigger" onclick="toggleGanttMs(event)" id="ganttMsTrigger">
+            <i class="ti ti-filter" style="font-size:12px;color:var(--text-3);"></i>
+            <span id="ganttMsLabel">${activeEngs.length ? activeEngs.length+' selected' : 'All visible people'}</span>
+            <i class="ti ti-chevron-down" style="font-size:11px;color:var(--text-3);transition:transform .2s;" id="ganttMsChevron"></i>
+          </div>
+          <div class="gantt-ms-dropdown" id="ganttMsDropdown" style="display:none;">
+            <div class="gantt-ms-search-wrap">
+              <input class="gantt-ms-search" id="ganttMsSearch" type="text" placeholder="Search engineers…" oninput="filterGanttMsOptions()" autocomplete="off">
+            </div>
+            <div class="gantt-ms-options" id="ganttMsOptions">
+              ${allEngs.map(a => `
+                <label class="gantt-ms-option" data-eng="${a.toLowerCase()}">
+                  <input type="checkbox" value="${a.toLowerCase()}" ${activeEngs.includes(a.toLowerCase())?'checked':''} onchange="applyGanttFilter()">
+                  <span class="gantt-ms-dot" style="background:${engMap[a].color};"></span>
+                  <span class="gantt-ms-name">${a}</span>
+                </label>`).join('')}
+            </div>
+            <div class="gantt-ms-footer">
+              <button onclick="ganttMsSelectAll()" style="font-size:11px;padding:4px 8px;">Select all</button>
+              <button onclick="ganttMsClearAll()" style="font-size:11px;padding:4px 8px;">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="gantt-toolbar-row1-right">
+        <div class="gantt-zoom-btns">
+          <button class="gantt-zoom-btn${zoom===8?' active':''}" onclick="setGanttZoom(8)">8w</button>
+          <button class="gantt-zoom-btn${zoom===12?' active':''}" onclick="setGanttZoom(12)">12w</button>
+          <button class="gantt-zoom-btn${zoom===16?' active':''}" onclick="setGanttZoom(16)">16w</button>
+          <button class="gantt-zoom-btn${zoom===24?' active':''}" onclick="setGanttZoom(24)">24w</button>
+        </div>
+        <button onclick="ganttResetOffsets()" style="font-size:11px;color:var(--text-3);background:transparent;border:1px solid var(--border);padding:5px 10px;border-radius:var(--radius);">
+          <i class="ti ti-rotate-clockwise-2"></i> Reset
+        </button>
+        <span class="gantt-save-notice" id="ganttSaveNotice"><i class="ti ti-check"></i> Saved</span>
+      </div>
+    </div>
+    <div class="gantt-toolbar-row2" id="ganttPeopleStrip">
+      ${pillsHtml}
+    </div>
+  </div>
+  <div class="gantt-today-strip">
+    <span class="gantt-today-badge"><i class="ti ti-calendar-event" style="font-size:10px;"></i>&nbsp;Today</span>
+    <span>${todayStr}</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--text-3);">Drag bars to set planned start · Width = LOE</span>
+  </div>
+  <div class="gantt-scroll-body">
+    <div class="gantt-inner">
+      <div class="gantt-hdr">
+        <div class="gantt-lbl-col">People / Initiative</div>
+        <div class="gantt-tl-col">
+          ${weeks.map((w,i)=>{
+            const isToday = todayFrac >= i/zoom && todayFrac < (i+1)/zoom;
+            return `<div class="gantt-wk-cell${isToday?' today-wk':''}">${w.label}</div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div id="ganttRows" style="position:relative;">
+        ${engsToShow.map(eng => renderGanttEngineer(eng, engMap[eng], zoom, monday, totalMs, jiraBase)).join('')}
+        <div class="gantt-today-line-overlay" id="ganttTodayOverlay">
+          <div class="gantt-today-vline"></div>
+          <div class="gantt-today-flag">TODAY</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="gantt-tooltip" id="ganttTooltip"></div>`;
+
+  document.getElementById('ganttContent').innerHTML = html;
+  initGanttDrag(monday, totalMs, zoom);
+  requestAnimationFrame(() => positionTodayOverlay(todayFrac));
+}
+
+function positionTodayOverlay(todayFrac) {
+  const overlay = document.getElementById('ganttTodayOverlay');
+  const rows = document.getElementById('ganttRows');
+  if(!overlay || !rows) return;
+  const firstTl = rows.querySelector('.gantt-row-tl');
+  if(!firstTl) return;
+  const rowsRect = rows.getBoundingClientRect();
+  const tlRect = firstTl.getBoundingClientRect();
+  const todayPx = (tlRect.left - rowsRect.left) + todayFrac * tlRect.width;
+  overlay.style.left = todayPx + 'px';
+}
+
+function renderGanttEngineer(eng, engData, zoom, monday, totalMs, jiraBase) {
+  const { color, initMap } = engData;
+  const inits = Object.values(initMap);
+  const totalRem = Math.round(inits.reduce((a,b) => a + b.rem, 0));
+  const totalLoe = Math.round(inits.reduce((a,b) => a + b.loe, 0));
+
+  const rows = inits.map(b => {
+    const barKey = `${eng}||${b.initKey}`;
+    const savedOffset = S.ganttOffsets[barKey] || 0;
+    const widthWeeks = ganttHoursToWeeks(b.loe, zoom);
+    const leftFrac = Math.max(0, Math.min(savedOffset / zoom, 0.9));
+    const widthFrac = Math.min(widthWeeks / zoom, 1 - leftFrac);
+    const doneFrac = b.loe > 0 ? Math.min(1, (b.loe - b.rem) / b.loe) : 0;
+    const isDone = b.rem === 0 && b.loe > 0 && !(b.tickets||[]).some(t => (t.status||'').toLowerCase().includes('dev complete'));
+
+    const ticketData = JSON.stringify(b.tickets.slice(0,30).map(t => ({
+      key: t.key, summary: t.summary, loe: t.loe, remaining: t.remaining, status: t.status, isDone: t.isDone
+    }))).replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+
+    let gridLines = '';
+    for(let i = 0; i <= zoom; i++) gridLines += `<div class="gantt-gl" style="left:${(i/zoom*100).toFixed(2)}%;"></div>`;
+
+    const barLabel = b.summary.length > 30 ? b.summary.substring(0,28)+'…' : b.summary;
+
+    return `<div class="gantt-row">
+      <div class="gantt-row-lbl" title="${b.summary}">
+        <div class="gantt-row-lbl-name">
+          <i class="ti ti-layout-board-split" style="color:${color};font-size:11px;flex-shrink:0;"></i>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.summary}</span>
+        </div>
+        <div class="gantt-row-lbl-sub">${b.rem > 0 ? b.rem+'h rem' : '<span style="color:var(--success-text)">Done</span>'} &middot; ${b.loe}h total</div>
+      </div>
+      <div class="gantt-row-tl">
+        ${gridLines}
+        <div class="gantt-bar"
+          data-bar-key="${barKey.replace(/"/g,'&quot;')}"
+          data-loe="${b.loe}" data-rem="${b.rem}"
+          data-width-frac="${widthFrac.toFixed(4)}"
+          data-tickets="${ticketData}"
+          data-init-summary="${b.summary.replace(/"/g,'&quot;')}"
+          data-init-key="${b.initKey}"
+          data-jira-base="${jiraBase}"
+          style="left:${(leftFrac*100).toFixed(2)}%;width:${(widthFrac*100).toFixed(2)}%;background:${color};${isDone?'opacity:.4;':''}"
+          onmouseenter="showGanttTooltip(event,this)"
+          onmouseleave="hideGanttTooltip()"
+        >
+          <div class="gantt-bar-done-overlay" style="width:${(doneFrac*100).toFixed(1)}%;"></div>
+          <span class="gantt-bar-text">${barLabel}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="gantt-eng-sec" data-eng="${eng.toLowerCase()}">
+    <div class="gantt-eng-hdr" onclick="toggleGanttEng(this)">
+      <span class="gantt-eng-hdr-dot" style="background:${color};"></span>
+      <span>${eng}</span>
+      <span class="gantt-eng-hdr-meta">${inits.length} initiative${inits.length!==1?'s':''} &middot; ${totalRem}h rem / ${totalLoe}h total</span>
+      <i class="ti ti-chevron-down gantt-eng-hdr-chevron"></i>
+    </div>
+    <div class="gantt-eng-body">${rows}</div>
+  </div>`;
+}
+
+function generateWeekGridLines(zoom) { return ''; }
+
+
+// ── Tooltip status badge helper ────────────────────────────────────────────
+function ganttStatusBadge(status, isDone) {
+  const s = (status||'').toLowerCase();
+  if(isDone || s === 'done' || s.includes('closed') || s === 'complete' || s.includes('resolved') || s.includes('verified') || s.includes('on prod'))
+    return { label: status||'Done', bg: '#E6F4EF', color: '#156647' };
+  if(s.includes('dev complete') || s.includes('dev progress') || s.includes('progress') || s.includes('in progress') || s.includes('reopened'))
+    return { label: status||'In Progress', bg: '#EEF2FD', color: '#1C51E1' };
+  if(s.includes('review') || s.includes('qa'))
+    return { label: status||'Review', bg: '#F0EEFF', color: '#5B3FD4' };
+  if(s.includes('blocked') || s.includes('impediment'))
+    return { label: status||'Blocked', bg: '#FEE2E2', color: '#991B1B' };
+  if(s.includes('halted') || s.includes('on hold') || s.includes('paused'))
+    return { label: status||'On Hold', bg: '#F5EFE7', color: '#7C4A1E' };
+  if(s.includes('todo') || s.includes('to do') || s.includes('open') || s.includes('backlog'))
+    return { label: status||'To Do', bg: '#FEF3C7', color: '#92400E' };
+  return { label: status||'—', bg: '#F2F2F7', color: '#555570' };
+}
+
+
+function showGanttTooltip(e, bar) {
+  if(bar.classList.contains('dragging')) return;
+  const tooltip = document.getElementById('ganttTooltip');
+  if(!tooltip) return;
+  const summary = bar.dataset.initSummary || '';
+  const initKey = bar.dataset.initKey || '';
+  const jiraBase = bar.dataset.jiraBase || 'https://summitk12.atlassian.net';
+  const loe = parseFloat(bar.dataset.loe||0);
+  const rem = parseFloat(bar.dataset.rem||0);
+  const pctDone = loe>0 ? Math.round(((loe-rem)/loe)*100) : 0;
+  let tickets = [];
+  try { tickets = JSON.parse(bar.dataset.tickets.replace(/&quot;/g,'"').replace(/&#39;/g,"'")); } catch(ex){}
+
+  const MAX_SHOW = 30;
+  const shown = tickets.slice(0, MAX_SHOW);
+  const extra = tickets.length - shown.length;
+
+  const ticketRows = shown.map(t => {
+    const loeStr = t.loe > 0 ? `${t.loe}h` : '';
+    const s = (t.status||'').toLowerCase();
+    const isReallyDone = (t.isDone && !s.includes('dev complete') && !s.includes('dev progress'))
+      || s.includes('on prod') || s.includes('verified');
+    const statusInfo = ganttStatusBadge(t.status, isReallyDone);
+    return `<div class="gantt-tooltip-ticket${isReallyDone?' gantt-ticket-done':''}">
+      <a href="${jiraBase}/browse/${t.key}" target="_blank" rel="noopener" style="${isReallyDone?'text-decoration:line-through;':''}">${t.key}</a>
+      <span class="gantt-ticket-summary" style="${isReallyDone?'text-decoration:line-through;':''}" title="${(t.summary||'').replace(/"/g,'&quot;')}">${t.summary||''}</span>
+      <span class="gantt-tooltip-status-badge" style="background:${statusInfo.bg};color:${statusInfo.color};flex-shrink:0;">${statusInfo.label}</span>
+      ${loeStr ? `<span class="gantt-ticket-loe">${loeStr}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  tooltip.innerHTML = `
+    <div class="gantt-tooltip-header">
+      <div class="gantt-tooltip-title">${summary}</div>
+      <div class="gantt-tooltip-meta">${loe}h total LOE &middot; ${rem}h remaining &middot; ${pctDone}% done</div>
+    </div>
+    <div class="gantt-tooltip-tickets">${ticketRows}</div>
+    ${extra > 0 ? `<div class="gantt-tooltip-more">+${extra} more tickets not shown</div>` : ''}`;
+
+  positionGanttTooltip(e, tooltip);
+  tooltip.classList.add('visible');
+  tooltip.style.display = 'block';
+
+  // Keep visible when hovering tooltip itself
+  tooltip.onmouseenter = () => tooltip.classList.add('visible');
+  tooltip.onmouseleave = () => hideGanttTooltip();
+}
+
+function positionGanttTooltip(e, tooltip) {
+  tooltip.style.display = 'block';
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const tw = Math.min(420, vw - 20);
+  let x = e.clientX + 12, y = e.clientY + 12;
+  if(x + tw > vw - 10) x = e.clientX - tw - 12;
+  if(y + 300 > vh - 10) y = e.clientY - 300;
+  tooltip.style.left = Math.max(8, x) + 'px';
+  tooltip.style.top  = Math.max(8, y) + 'px';
+  tooltip.style.maxWidth = tw + 'px';
+}
+
+function hideGanttTooltip() {
+  // Small delay so user can mouse into tooltip
+  setTimeout(() => {
+    const t = document.getElementById('ganttTooltip');
+    if(t && !t.matches(':hover')) { t.classList.remove('visible'); t.style.display='none'; }
+  }, 120);
+}
+
+// ── Drag-and-drop ──────────────────────────────────────────────────────────
+function initGanttDrag(monday, totalMs, zoom) {
+  let dragState = null;
+
+  document.addEventListener('mousedown', onGanttMouseDown);
+  document.addEventListener('mousemove', onGanttMouseMove);
+  document.addEventListener('mouseup',   onGanttMouseUp);
+
+  function onGanttMouseDown(e) {
+    const bar = e.target.closest('.gantt-bar');
+    if(!bar) return;
+    e.preventDefault();
+    hideGanttTooltip();
+    const timeline = bar.closest('.gantt-row-tl');
+    const rect = timeline.getBoundingClientRect();
+    const barLeft = parseFloat(bar.style.left) / 100; // fraction
+    const clickFrac = (e.clientX - rect.left) / rect.width;
+    const clickOffsetInBar = clickFrac - barLeft;
+
+    dragState = {
+      bar, timeline, rect,
+      barKey: bar.dataset.barKey,
+      startX: e.clientX,
+      origLeft: barLeft,
+      clickOffset: clickOffsetInBar,
+      zoom
+    };
+    bar.classList.add('dragging');
+  }
+
+  function onGanttMouseMove(e) {
+    if(!dragState) return;
+    const { bar, timeline, barKey, clickOffset, zoom } = dragState;
+    // Recalculate rect in case of scroll
+    const rect = timeline.getBoundingClientRect();
+    const frac = (e.clientX - rect.left) / rect.width;
+    const newLeft = Math.max(0, Math.min(frac - clickOffset, 1 - parseFloat(bar.dataset.widthFrac)));
+    bar.style.left = (newLeft * 100).toFixed(2) + '%';
+  }
+
+  function onGanttMouseUp(e) {
+    if(!dragState) return;
+    const { bar, barKey, zoom } = dragState;
+    bar.classList.remove('dragging');
+    const leftFrac = parseFloat(bar.style.left) / 100;
+    const offsetWeeks = leftFrac * zoom;
+    S.ganttOffsets[barKey] = Math.round(offsetWeeks * 10) / 10;
+    persist();
+    const notice = document.getElementById('ganttSaveNotice');
+    if(notice) { notice.style.display='inline'; setTimeout(()=>notice.style.display='none', 2000); }
+    dragState = null;
+  }
+
+  // Clean up if we leave the page
+  window.addEventListener('beforeunload', () => {
+    document.removeEventListener('mousedown', onGanttMouseDown);
+    document.removeEventListener('mousemove', onGanttMouseMove);
+    document.removeEventListener('mouseup', onGanttMouseUp);
+  }, { once: true });
+}
+
+// ── Gantt controls ─────────────────────────────────────────────────────────
+
+function toggleGanttPerson(engLower, e) {
+  if(e) e.stopPropagation();
+  if(!S.ganttActiveEngs) S.ganttActiveEngs = [];
+  const idx = S.ganttActiveEngs.indexOf(engLower);
+  if(idx > -1) S.ganttActiveEngs.splice(idx, 1);
+  else S.ganttActiveEngs.push(engLower);
+  persist();
+  renderGanttTab();
+}
+
+function ganttToggleShowAll(btn) {
+  const hidden = document.querySelectorAll('.gantt-pill-hidden');
+  const showing = hidden[0] && hidden[0].style.display !== 'none';
+  hidden.forEach(el => el.style.display = showing ? 'none' : '');
+  btn.textContent = showing ? `Show all (${hidden.length} more)` : 'Show fewer';
+}
+
+function applyGanttFilter() {
+  const allCheckboxes = [...document.querySelectorAll('#ganttMsOptions input[type=checkbox]')];
+  const checked = allCheckboxes.filter(cb => cb.checked).map(cb => cb.value); // lowercase values
+  const allCount = allCheckboxes.length;
+
+  // If all are checked (or none), treat as "show all" — empty means no filter
+  S.ganttActiveEngs = (checked.length === 0 || checked.length === allCount) ? [] : checked;
+  persist();
+
+  // Update label
+  const label = document.getElementById('ganttMsLabel');
+  if(label) label.textContent = S.ganttActiveEngs.length ? S.ganttActiveEngs.length + ' selected' : 'All visible people';
+
+  // Full re-render is simplest and keeps everything in sync
+  renderGanttTab();
+}
+
+function toggleGanttMs(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('ganttMsDropdown');
+  const chevron = document.getElementById('ganttMsChevron');
+  const isOpen = dd && dd.style.display !== 'none';
+  if(dd) dd.style.display = isOpen ? 'none' : 'block';
+  if(chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if(!isOpen) document.getElementById('ganttMsSearch')?.focus();
+}
+
+function filterGanttMsOptions() {
+  const q = (document.getElementById('ganttMsSearch')?.value || '').toLowerCase();
+  document.querySelectorAll('#ganttMsOptions .gantt-ms-option').forEach(opt => {
+    opt.style.display = (!q || opt.dataset.eng.includes(q)) ? '' : 'none';
+  });
+}
+
+function ganttMsSelectAll() {
+  document.querySelectorAll('#ganttMsOptions input[type=checkbox]').forEach(cb => cb.checked = true);
+  applyGanttFilter(); // all checked = all count = clears filter, shows everyone
+}
+
+function ganttMsClearAll() {
+  document.querySelectorAll('#ganttMsOptions input[type=checkbox]').forEach(cb => cb.checked = false);
+  applyGanttFilter(); // none checked = clears filter, shows everyone
+}
+
+document.addEventListener('click', e => {
+  if(!e.target.closest('#ganttMultiselect')) {
+    const dd = document.getElementById('ganttMsDropdown');
+    const chevron = document.getElementById('ganttMsChevron');
+    if(dd && dd.style.display !== 'none') { dd.style.display = 'none'; if(chevron) chevron.style.transform = ''; }
+  }
+});
+
+function toggleGanttEng(hdr) { hdr.closest('.gantt-eng-sec').classList.toggle('collapsed'); }
+function ganttFilterEng() {}
+
+function setGanttZoom(w) { S.ganttZoom = w; persist(); renderGanttTab(); }
+function ganttResetOffsets() { S.ganttOffsets = {}; persist(); renderGanttTab(); }
+
+// ── Risk engine ────────────────────────────────────────────────────────────
+// Returns { level:'red'|'amber'|null, reasons:[{level,icon,text}], pct, expectedPct, daysLeft }
+function computeRisk(p) {
+  const isDone = (p.status||'').toLowerCase().includes('done');
+  if(isDone) return { level:null, reasons:[], pct:100, expectedPct:null, daysLeft:null };
+
+  const now = new Date(); now.setHours(0,0,0,0);
+  const reasons = [];
+  let topLevel = null;
+
+  const pct = p.loe > 0 ? Math.min(100, Math.round(((p.loe - p.rem) / p.loe) * 100)) : 0;
+  let expectedPct = null;
+  let daysLeft = null;
+
+  // ── Timeline-based expected progress ──────────────────────────────────────
+  if(p.devBy && p.devBy !== '—') {
+    const devDate = new Date(p.devBy); devDate.setHours(0,0,0,0);
+    daysLeft = Math.ceil((devDate - now) / 86400000);
+
+    // Try to find a start date — use earliest child ticket created date or fall back to 90 days before devBy
+    const startDate = new Date(devDate); startDate.setDate(startDate.getDate() - 90);
+    const totalSpan = Math.max(1, Math.ceil((devDate - startDate) / 86400000));
+    const elapsed   = Math.max(0, Math.ceil((now - startDate) / 86400000));
+    expectedPct = Math.min(100, Math.round((elapsed / totalSpan) * 100));
+
+    const gap = expectedPct - pct; // positive = behind schedule
+
+    if(daysLeft < 0) {
+      reasons.push({ level:'red', icon:'ti-calendar-x', text:`Dev deadline passed ${Math.abs(daysLeft)} day${Math.abs(daysLeft)!==1?'s':''} ago (was ${fmtDate(p.devBy)}) — ${p.rem} hrs still remaining` });
+      topLevel = 'red';
+    } else if(daysLeft <= 14 && pct < 85) {
+      reasons.push({ level:'red', icon:'ti-alarm', text:`Only ${daysLeft} day${daysLeft!==1?'s':''} until dev deadline (${fmtDate(p.devBy)}) with ${100-pct}% of work still remaining (${p.rem} hrs)` });
+      topLevel = 'red';
+    } else if(gap >= 30) {
+      reasons.push({ level:'red', icon:'ti-trending-down', text:`Progress (${pct}%) is ${gap} points behind schedule — expected ~${expectedPct}% complete by now given the ${fmtDate(p.devBy)} deadline` });
+      topLevel = 'red';
+    } else if(gap >= 15) {
+      reasons.push({ level:'amber', icon:'ti-trending-down', text:`Progress (${pct}%) is running ${gap} points behind expected pace (~${expectedPct}%) for the ${fmtDate(p.devBy)} deadline` });
+      if(!topLevel) topLevel = 'amber';
+    } else if(daysLeft <= 30 && pct < 70) {
+      reasons.push({ level:'amber', icon:'ti-clock', text:`${daysLeft} days until deadline (${fmtDate(p.devBy)}) — only ${pct}% complete with ${p.rem} hrs left` });
+      if(!topLevel) topLevel = 'amber';
+    }
+  } else {
+    reasons.push({ level:'info', icon:'ti-calendar-off', text:'No dev deadline set — risk timeline cannot be calculated' });
+  }
+
+  // ── No LOE estimate ────────────────────────────────────────────────────────
+  if(p.loe === 0) {
+    reasons.push({ level:'amber', icon:'ti-question-mark', text:'No LOE estimate — progress tracking unavailable' });
+    if(!topLevel) topLevel = 'amber';
+  }
+
+  // ── Large remaining work ───────────────────────────────────────────────────
+  if(p.rem > 500 && daysLeft !== null && daysLeft > 0) {
+    const hrsPerDay = p.rem / daysLeft;
+    if(hrsPerDay > 40) {
+      reasons.push({ level:'red', icon:'ti-stack', text:`${p.rem} hrs remaining with ${daysLeft} days left = ${Math.round(hrsPerDay)} hrs/day needed (team capacity likely ~40 hrs/day)` });
+      topLevel = 'red';
+    } else if(hrsPerDay > 20) {
+      reasons.push({ level:'amber', icon:'ti-stack', text:`${p.rem} hrs remaining — requires ~${Math.round(hrsPerDay)} hrs/day to meet deadline` });
+      if(!topLevel) topLevel = 'amber';
+    }
+  }
+
+  // ── Blocked or stalled ─────────────────────────────────────────────────────
+  const statusL = (p.status||'').toLowerCase();
+  if(statusL.includes('blocked') || statusL.includes('impediment')) {
+    reasons.push({ level:'red', icon:'ti-ban', text:`Initiative is currently blocked (status: ${p.status})` });
+    topLevel = 'red';
+  }
+
+  return { level: topLevel, reasons, pct, expectedPct, daysLeft };
+}
+
+function fmtDate(d) {
+  if(!d || d==='—') return '—';
+  try { return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){ return d; }
+}
+function shortDate(d) {
+  if(!d || d==='—') return '—';
+  try { return new Date(d).toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'}); } catch(e){ return d; }
+}
+
+function renderRiskTab(){
+  const d = S.data;
+  if(!d.length) {
+    document.getElementById('riskContent').innerHTML = '<div class="empty-state"><i class="ti ti-alert-triangle"></i><div class="empty-sub">Sync Jira data to see risk signals.</div></div>';
+    return;
+  }
+
+  const atRisk = d
+    .map(p => ({ p, risk: computeRisk(p) }))
+    .filter(({ risk }) => risk.level !== null)
+    .sort((a, b) => {
+      const order = { red: 0, amber: 1 };
+      return (order[a.risk.level] ?? 2) - (order[b.risk.level] ?? 2);
+    });
+
+  const redCount   = atRisk.filter(x => x.risk.level === 'red').length;
+  const amberCount = atRisk.filter(x => x.risk.level === 'amber').length;
+  const okCount    = d.length - atRisk.length;
+
+  // ── Engineer load analysis ─────────────────────────────────────────────────
+  const engLoad = {};
+  d.forEach(p => p.assignees.forEach(a => { engLoad[a] = (engLoad[a]||0) + p.rem; }));
+  const heavy = Object.entries(engLoad).filter(([,v])=>v>400).sort((a,b)=>b[1]-a[1]);
+
+  let html = `<div class="risk-summary-bar">
+    <div class="risk-summary-pill" style="border-color:rgba(220,38,38,0.3);">
+      <span class="rsp-count" style="color:var(--danger);">${redCount}</span>
+      <span style="color:var(--text-2);">Critical</span>
+    </div>
+    <div class="risk-summary-pill" style="border-color:rgba(217,119,6,0.3);">
+      <span class="rsp-count" style="color:var(--warning);">${amberCount}</span>
+      <span style="color:var(--text-2);">At Risk</span>
+    </div>
+    <div class="risk-summary-pill" style="border-color:rgba(29,158,117,0.3);">
+      <span class="rsp-count" style="color:var(--success);">${okCount}</span>
+      <span style="color:var(--text-2);">On Track</span>
+    </div>
+    <div style="flex:1;"></div>
+    <span style="font-size:11px;color:var(--text-3);align-self:center;">Assessed ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+  </div>`;
+
+  if(atRisk.length === 0) {
+    html += '<div class="empty-state"><i class="ti ti-circle-check" style="color:var(--success);"></i><div class="empty-title">No risk signals</div><div class="empty-sub">All initiatives are on track.</div></div>';
+  } else {
+    const levelColor = { red:'#E24B4A', amber:'#EF9F27' };
+    const levelLabel = { red:'CRITICAL', amber:'AT RISK' };
+    const levelBadge = { red:'b-red', amber:'b-amber' };
+
+    atRisk.forEach(({ p, risk }) => {
+      const progressBar = p.loe > 0
+        ? `<div style="display:flex;align-items:center;gap:8px;flex:1;">
+            <div class="progress-bar" style="min-width:100px;flex:1;max-width:180px;"><div class="progress-fill" style="width:${risk.pct}%;background:${barColor(risk.pct)};"></div></div>
+            <span style="font-size:11px;color:var(--text-2);font-weight:600;">${risk.pct}% done</span>
+            ${risk.expectedPct!==null?`<span style="font-size:11px;color:var(--text-3);">· ~${risk.expectedPct}% expected</span>`:''}
+           </div>`
+        : '<span style="font-size:11px;color:var(--text-3);">No LOE estimate</span>';
+
+      html += `<div class="risk-initiative-card" id="risk-${p.key}" style="border-left:3px solid ${levelColor[risk.level]};">
+        <div class="risk-init-header">
+          <span class="risk-init-key">${p.key}</span>
+          <span class="risk-init-name" title="${p.summary}">${p.summary}</span>
+          <span class="badge ${levelBadge[risk.level]}" style="flex-shrink:0;">${levelLabel[risk.level]}</span>
+        </div>
+        <div class="risk-init-meta">
+          <span class="risk-meta-item"><i class="ti ti-calendar" style="font-size:11px;"></i>Dev by: <strong>${p.devBy!=='—'?fmtDate(p.devBy):'Not set'}</strong></span>
+          ${p.goLive?`<span class="risk-meta-item"><i class="ti ti-rocket" style="font-size:11px;"></i>Go-live: <strong>${fmtDate(p.goLive)}</strong></span>`:''}
+          <span class="risk-meta-item"><i class="ti ti-clock" style="font-size:11px;"></i>${risk.daysLeft!==null?(risk.daysLeft<0?`<strong style="color:var(--danger);">${Math.abs(risk.daysLeft)}d overdue</strong>`:`<strong>${risk.daysLeft}d left</strong>`):'No deadline'}</span>
+          <span class="risk-meta-item"><i class="ti ti-layers" style="font-size:11px;"></i>Remaining: <strong>${p.rem} hrs</strong></span>
+          <span style="flex:1;"></span>
+          ${progressBar}
+        </div>
+        <div class="risk-reasons">
+          ${risk.reasons.map(r=>`<div class="risk-reason level-${r.level}"><i class="ti ${r.icon}" style="flex-shrink:0;"></i><span>${r.text}</span></div>`).join('')}
+        </div>
+      </div>`;
+    });
+  }
+
+  // ── Engineer load section ──────────────────────────────────────────────────
+  if(heavy.length) {
+    html += `<div style="margin-top:24px;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.07em;">Engineer Capacity Flags</div>`;
+    html += heavy.map(([name,hrs])=>{
+      const level = hrs > 600 ? 'red' : 'amber';
+      const bc = level==='red'?'#E24B4A':'#EF9F27';
+      return `<div class="risk-initiative-card" style="border-left:3px solid ${bc};">
+        <div class="risk-init-header">
+          <i class="ti ti-user" style="color:${bc};font-size:16px;"></i>
+          <span class="risk-init-name">${name}</span>
+          <span class="badge ${level==='red'?'b-red':'b-amber'}" style="flex-shrink:0;">${hrs} hrs backlog</span>
+        </div>
+        <div class="risk-reasons">
+          <div class="risk-reason level-${level}"><i class="ti ti-stack"></i><span>${hrs} hrs of remaining work assigned — ${hrs>600?'significantly overloaded':'high load, monitor capacity'}</span></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('riskContent').innerHTML = html;
+}
+
+function showTab(name, el){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  // Activate the matching nav button
+  document.querySelectorAll('.nav-tab').forEach(t=>{ if(t.getAttribute('onclick')&&t.getAttribute('onclick').includes(`'${name}'`)) t.classList.add('active'); });
+  if(el && el.classList) el.classList.add('active');
+}
+
+function goToRisk(key, level) {
+  // Activate the Risk tab
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-risk').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if(t.getAttribute('onclick') && t.getAttribute('onclick').includes("'risk'")) t.classList.add('active');
+  });
+  // Scroll to and highlight the initiative's risk card
+  setTimeout(() => {
+    const el = document.getElementById('risk-' + key);
+    if(el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const color = level === 'red' ? 'var(--danger)' : 'var(--warning)';
+      el.style.outline = '2px solid ' + color;
+      el.style.outlineOffset = '2px';
+      setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; }, 2200);
+    }
+  }, 150);
+}
+
+function renderThroughputTab() {
+  const d = S.data;
+  const el = document.getElementById('throughputContent');
+  if(!d.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-chart-bar"></i><div class="empty-sub">Sync Jira data to see engineer throughput.</div></div>';
+    return;
+  }
+
+  // Build per-engineer map from worklogs (real logged time) across all initiatives
+  const engMap = {}; // name -> { loggedSecs, remaining, tasks: [...] }
+  const ENG_COLORS = ['#1C51E1','#1D9E75','#D97706','#7C3AED','#DB2777','#0891B2','#65A30D','#EA580C','#6366F1','#14B8A6'];
+  let colorIdx = 0;
+
+  // Track which tickets had worklog data vs fell back to estimates
+  let ticketsWithWorklogs = 0, ticketsFallback = 0;
+
+  d.forEach(p => {
+    p.children.forEach(c => {
+      const worklogs = c.worklogs || [];
+      const hasWorklogs = worklogs.length > 0;
+      if(hasWorklogs) ticketsWithWorklogs++; else if(c.logged > 0) ticketsFallback++;
+
+      if(hasWorklogs) {
+        // Real worklog data: credit each author for their actual logged seconds
+        worklogs.forEach(w => {
+          const name = w.author && w.author !== '—' ? w.author : null;
+          if(!name) return;
+          if(!engMap[name]) engMap[name] = { loggedHrs: 0, remaining: 0, tasks: [], color: ENG_COLORS[colorIdx++ % ENG_COLORS.length] };
+          engMap[name].loggedHrs += w.timeSpentSeconds / 3600;
+          // Add/merge into task list
+          let task = engMap[name].tasks.find(t => t.taskKey === c.key);
+          if(!task) {
+            task = { taskKey: c.key, taskName: c.summary, initKey: p.key, initName: p.summary, loggedHrs: 0, remaining: c.remaining, isDone: c.isDone };
+            engMap[name].tasks.push(task);
+          }
+          task.loggedHrs += w.timeSpentSeconds / 3600;
+        });
+      } else if(c.logged > 0) {
+        // Fallback: use estimated burndown for assignee only (no worklog data)
+        const name = c.assignee && c.assignee !== '—' ? c.assignee : null;
+        if(!name) return;
+        if(!engMap[name]) engMap[name] = { loggedHrs: 0, remaining: 0, tasks: [], color: ENG_COLORS[colorIdx++ % ENG_COLORS.length] };
+        engMap[name].loggedHrs += c.logged;
+        engMap[name].tasks.push({ taskKey: c.key, taskName: c.summary, initKey: p.key, initName: p.summary, loggedHrs: c.logged, remaining: c.remaining, isDone: c.isDone, isFallback: true });
+      }
+
+      // Always add remaining to the assignee (worklog doesn't tell us who will do remaining work)
+      if(c.remaining > 0) {
+        const name = c.assignee && c.assignee !== '—' ? c.assignee : null;
+        if(name) {
+          if(!engMap[name]) engMap[name] = { loggedHrs: 0, remaining: 0, tasks: [], color: ENG_COLORS[colorIdx++ % ENG_COLORS.length] };
+          engMap[name].remaining += c.remaining;
+        }
+      }
+    });
+  });
+
+  const engineers = Object.entries(engMap)
+    .map(([name, e]) => ({
+      name, color: e.color,
+      logged:    Math.round(e.loggedHrs * 10) / 10,
+      remaining: Math.round(e.remaining * 10) / 10,
+      total:     Math.round((e.loggedHrs + e.remaining) * 10) / 10,
+      doneTasks: e.tasks.filter(t => t.isDone).length,
+      totalTasks: e.tasks.length,
+      hasFallback: e.tasks.some(t => t.isFallback),
+      tasks: e.tasks.sort((a,b) => (b.loggedHrs||0) - (a.loggedHrs||0))
+    }))
+    .filter(e => e.logged > 0)  // only show engineers who actually logged time
+    .sort((a,b) => b.logged - a.logged);
+
+  if(!engineers.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-user-off"></i><div class="empty-sub">No assignee data found. Make sure tickets have assignees in Jira.</div></div>';
+    return;
+  }
+
+  const totalLogged = engineers.reduce((a,e) => a+e.logged, 0);
+  const totalRemaining = engineers.reduce((a,e) => a+e.remaining, 0);
+  const topEng = engineers[0];
+  const anyFallback = engineers.some(e => e.hasFallback);
+  const coverageNote = anyFallback
+    ? `<span style="font-size:11px;color:var(--warning-text);background:var(--warning-bg);border:1px solid rgba(217,119,6,0.2);border-radius:6px;padding:2px 9px;margin-left:8px;"><i class="ti ti-info-circle" style="font-size:11px;"></i> Some tickets used estimated burndown (no worklogs found)</span>`
+    : `<span style="font-size:11px;color:var(--success-text);background:var(--success-bg);border:1px solid rgba(29,158,117,0.2);border-radius:6px;padding:2px 9px;margin-left:8px;"><i class="ti ti-check" style="font-size:11px;"></i> All hours from Jira worklogs</span>`;
+
+  // Summary bar
+  const maxLogged = engineers.length > 0 ? engineers[0].logged : 1; // already sorted desc
+  let html = `<div class="throughput-summary">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+      <i class="ti ti-chart-bar" style="color:var(--primary);font-size:16px;"></i>
+      <span style="font-size:13px;font-weight:700;color:var(--text);">Throughput per Engineer</span>
+      ${coverageNote}
+    </div>
+    <div style="font-size:11px;color:var(--text-3);margin-bottom:14px;line-height:1.5;">
+      Hours logged against <strong style="color:var(--text-2);">tracked roadmap initiatives only</strong> — does not include time logged on other Jira projects or tickets outside this roadmap. Engineers with no logged time are excluded.
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+      <div style="text-align:center;padding:10px;background:var(--success-bg);border-radius:var(--radius-lg);border:1px solid rgba(29,158,117,0.2);">
+        <div style="font-size:24px;font-weight:800;color:var(--success);line-height:1;">${Math.round(totalLogged).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--success-text);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:3px;">Hrs Logged</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--warning-bg);border-radius:var(--radius-lg);border:1px solid rgba(217,119,6,0.2);">
+        <div style="font-size:24px;font-weight:800;color:var(--warning);line-height:1;">${Math.round(totalRemaining).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--warning-text);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:3px;">Hrs Remaining</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--primary-bg);border-radius:var(--radius-lg);border:1px solid rgba(28,81,225,0.15);">
+        <div style="font-size:24px;font-weight:800;color:var(--primary);line-height:1;">${engineers.length}</div>
+        <div style="font-size:10px;color:var(--primary);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:3px;">With Logged Time</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);">
+        <div style="font-size:14px;font-weight:800;color:var(--text);line-height:1.2;" title="${topEng.name}">${topEng.name.split(' ')[0]}</div>
+        <div style="font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:3px;">${topEng.logged} hrs · Top Output</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Hours Logged by Engineer — roadmap tickets only · ${engineers.length} engineers · ${d.reduce((a,p)=>a+p.childCount,0)} tickets</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${engineers.map(e => {
+          const barW = maxLogged > 0 ? Math.round((e.logged/maxLogged)*100) : 0;
+          const ticketData = JSON.stringify(e.tasks.map(t => ({ key: t.taskKey, summary: t.taskName, initName: t.initName, loggedHrs: Math.round((t.loggedHrs||0)*10)/10, isDone: t.isDone }))).replace(/"/g,'&quot;');
+          return `<div style="display:flex;align-items:center;gap:10px;min-height:22px;">
+            <div style="width:140px;font-size:11px;font-weight:600;color:var(--text);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;" title="${e.name}">${e.name}</div>
+            <div style="flex:1;height:12px;background:var(--border);border-radius:10px;overflow:hidden;cursor:default;"
+              onmouseenter="showThroughputTooltip(event,this)"
+              onmouseleave="hideThroughputTooltip()"
+              data-name="${e.name.replace(/"/g,'&quot;')}"
+              data-logged="${e.logged}"
+              data-remaining="${e.remaining}"
+              data-done-tasks="${e.doneTasks}"
+              data-total-tasks="${e.totalTasks}"
+              data-tickets="${ticketData}">
+              <div style="height:100%;border-radius:10px;background:${e.color};width:${barW}%;pointer-events:none;"></div>
+            </div>
+            <div style="width:60px;font-size:11px;font-weight:700;color:var(--text);flex-shrink:0;">${e.logged} hrs</div>
+            <div style="width:54px;font-size:10px;color:var(--text-3);flex-shrink:0;">${e.doneTasks}/${e.totalTasks} done</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  // Per-engineer cards
+  const domain = S.domain.includes('localhost') ? 'summitk12.atlassian.net' : S.domain;
+  html += `<div class="throughput-grid">`;
+  engineers.forEach(e => {
+    const throughputPct = e.total > 0 ? Math.round((e.logged/e.total)*100) : 0;
+    const barColor2 = throughputPct >= 80 ? 'var(--success)' : throughputPct >= 40 ? 'var(--primary)' : 'var(--warning)';
+    html += `<div class="eng-card">
+      <div class="eng-card-header">
+        <div class="eng-dot" style="background:${e.color};"></div>
+        <div class="eng-name">${e.name}</div>
+        <span style="font-size:11px;font-weight:700;color:${barColor2};">${throughputPct}%</span>
+      </div>
+      <div class="eng-stat-row">
+        <div class="eng-stat">
+          <div class="eng-stat-val" style="color:var(--success);">${e.logged}</div>
+          <div class="eng-stat-lbl">Hrs Logged</div>
+        </div>
+        <div class="eng-stat">
+          <div class="eng-stat-val" style="color:var(--warning);">${e.remaining}</div>
+          <div class="eng-stat-lbl">Hrs Left</div>
+        </div>
+        <div class="eng-stat">
+          <div class="eng-stat-val">${e.doneTasks}</div>
+          <div class="eng-stat-lbl">Tasks Done</div>
+        </div>
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px;">
+        <div style="height:100%;border-radius:10px;background:${barColor2};width:${throughputPct}%;transition:width .5s ease;"></div>
+      </div>
+      <div class="eng-tasks" style="max-height:220px;overflow-y:auto;">
+        ${e.tasks.map(t => `<div class="eng-task-row">
+          <div style="width:8px;height:8px;border-radius:50%;background:${t.isDone?'var(--success)':'var(--border-mid)'};flex-shrink:0;margin-right:6px;margin-top:1px;"></div>
+          <div style="flex:1;min-width:0;">
+            <a href="https://${domain}/browse/${t.taskKey}" target="_blank" style="font-size:11px;color:var(--primary);font-weight:600;white-space:nowrap;display:block;overflow:hidden;text-overflow:ellipsis;" title="${t.taskName}">${t.taskKey}</a>
+            <div style="font-size:10px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${t.taskName}">${t.taskName}${t.isFallback ? ' <span style="color:var(--text-3);">(est)</span>' : ''}</div>
+          </div>
+          <div class="eng-task-hrs">${(t.loggedHrs||0) > 0 ? Math.round((t.loggedHrs||0)*10)/10 + 'h' : '—'}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  el.innerHTML = html;
+}
+
+function showThroughputTooltip(e, bar) {
+  const tooltip = document.getElementById('ganttTooltip');
+  if(!tooltip) return;
+
+  const name      = bar.dataset.name || '';
+  const logged    = parseFloat(bar.dataset.logged || 0);
+  const remaining = parseFloat(bar.dataset.remaining || 0);
+  const doneTasks = parseInt(bar.dataset.doneTasks || 0);
+  const totalTasks= parseInt(bar.dataset.totalTasks || 0);
+  let tasks = [];
+  try { tasks = JSON.parse(bar.dataset.tickets.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); } catch(ex) { return; }
+
+  const domain = S.domain.includes('localhost') ? 'summitk12.atlassian.net' : S.domain;
+  const jiraBase = 'https://' + domain;
+
+  const initiatives = [...new Set(tasks.map(t => t.initName))];
+  const initStr = initiatives.length <= 3
+    ? initiatives.join(' · ')
+    : initiatives.slice(0,3).join(' · ') + ` +${initiatives.length-3} more`;
+
+  const ticketRows = tasks.map(t => {
+    const doneStyle = t.isDone ? 'text-decoration:line-through;' : '';
+    const hrsLabel  = t.loggedHrs > 0 ? `${t.loggedHrs}h` : '';
+    return `<div class="gantt-tooltip-ticket${t.isDone?' gantt-ticket-done':''}">
+      <a href="${jiraBase}/browse/${t.key}" target="_blank" rel="noopener" style="${doneStyle}">${t.key}</a>
+      <span class="gantt-ticket-summary" style="${doneStyle}" title="${(t.summary||'').replace(/"/g,'&quot;')}">${t.summary||''}</span>
+      <span style="font-size:10px;color:var(--text-3);white-space:nowrap;flex-shrink:0;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:1px 6px;">${t.initName}</span>
+      ${hrsLabel ? `<span class="gantt-ticket-loe">${hrsLabel}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  tooltip.innerHTML = `
+    <div class="gantt-tooltip-header">
+      <div class="gantt-tooltip-title">${name}</div>
+      <div class="gantt-tooltip-meta">${logged}h logged &middot; ${remaining}h remaining &middot; ${doneTasks}/${totalTasks} tasks done</div>
+      <div style="font-size:10px;color:var(--text-3);margin-top:3px;">${initStr}</div>
+    </div>
+    <div class="gantt-tooltip-tickets">${ticketRows}</div>`;
+
+  positionGanttTooltip(e, tooltip);
+  tooltip.classList.add('visible');
+  tooltip.style.display = 'block';
+  tooltip.onmouseenter = () => tooltip.classList.add('visible');
+  tooltip.onmouseleave = () => hideThroughputTooltip();
+}
+
+function hideThroughputTooltip() {
+  setTimeout(() => {
+    const t = document.getElementById('ganttTooltip');
+    if(t && !t.matches(':hover')) { t.classList.remove('visible'); t.style.display='none'; }
+  }, 120);
+}
+
+loadSettings();
+</script>
+</body>
+</html>
