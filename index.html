@@ -2644,47 +2644,111 @@ function setGanttZoom(w) { S.ganttZoom = w; persist(); renderGanttTab(); }
 function ganttResetOffsets() { S.ganttOffsets = {}; persist(); renderGanttTab(); }
 
 // ── Risk engine ────────────────────────────────────────────────────────────
-// Returns { level:'red'|'amber'|null, reasons:[{level,icon,text}], pct, expectedPct, daysLeft }
+// Returns { level:'red'|'amber'|null, reasons:[{level,icon,text}], pct, latestStart, daysLeft }
 function computeRisk(p) {
   const isDone = (p.status||'').toLowerCase().includes('done');
-  if(isDone) return { level:null, reasons:[], pct:100, expectedPct:null, daysLeft:null };
+  if(isDone) return { level:null, reasons:[], pct:100, latestStart:null, daysLeft:null };
 
   const now = new Date(); now.setHours(0,0,0,0);
   const reasons = [];
   let topLevel = null;
 
-  const pct = p.loe > 0 ? (p.logged > 0 ? Math.min(100, Math.round((p.logged/(p.logged+p.rem))*100)) : Math.min(100, Math.round(((p.loe-p.rem)/p.loe)*100))) : 0;
-  let expectedPct = null;
-  let daysLeft = null;
+  const pct = p.loe > 0
+    ? (p.logged > 0
+        ? Math.min(100, Math.round((p.logged / (p.logged + p.rem)) * 100))
+        : Math.min(100, Math.round(((p.loe - p.rem) / p.loe) * 100)))
+    : 0;
 
-  // ── Timeline-based expected progress ──────────────────────────────────────
+  let daysLeft = null;
+  let latestStart = null;
+
+  // ── Capacity model ─────────────────────────────────────────────────────────
+  // Each engineer has 6 hrs/day, but their contribution to THIS epic is
+  // capped by how much work they actually have here — someone with 4 hrs of
+  // tickets can't contribute a full day. We sum each assignee's daily
+  // contribution: min(their_loe_on_epic / daysNeeded, 6) — but since daysNeeded
+  // depends on capacity we use a simpler proxy: cap at 6 hrs/day per person,
+  // weighted by their share of remaining work so light assignees don't inflate capacity.
+  const HRS_PER_DEV_DAY = 6;
+  const START_BUFFER_DAYS = 5;
+
+  // Build per-assignee remaining hours from child tickets
+  const assigneeRem = {};
+  if(p.children && p.children.length) {
+    p.children.forEach(c => {
+      const name = c.assignee && c.assignee !== '—' ? c.assignee : '__unassigned__';
+      assigneeRem[name] = (assigneeRem[name] || 0) + (c.remaining || 0);
+    });
+  }
+  // Fall back to flat assignee list if no children data
+  if(Object.keys(assigneeRem).length === 0) {
+    const names = (p.assignees && p.assignees.length > 0) ? p.assignees : ['__unassigned__'];
+    names.forEach(n => { assigneeRem[n] = p.rem / names.length; });
+  }
+
+  // Each assignee contributes min(their_rem_on_epic, 6) hrs/day — someone
+  // with only 4 hrs of tickets realistically isn't burning 6 hrs/day on this epic
+  const dailyCapacity = Math.max(1, Object.values(assigneeRem).reduce((sum, rem) => {
+    return sum + Math.min(rem > 0 ? HRS_PER_DEV_DAY : 0, HRS_PER_DEV_DAY);
+  }, 0));
+  // But also floor each contributor's realistic daily rate by their total LOE share:
+  // if someone only has 8 hrs on the epic, they're done in ~1-2 days, not contributing
+  // a full 6 hrs/day for the entire duration. Use effective FTEs instead.
+  const totalAssigneeRem = Object.values(assigneeRem).reduce((a, v) => a + v, 0);
+  const effectiveDailyCapacity = Math.max(1, Object.entries(assigneeRem).reduce((sum, [, rem]) => {
+    if(rem <= 0) return sum;
+    // Their share of total work × 6 hrs/day, capped at 6
+    const share = totalAssigneeRem > 0 ? rem / totalAssigneeRem : 1;
+    // Weight: a 200hr person on a 212hr epic = ~6 hrs/day; 8hr person = ~0.23 hrs/day
+    return sum + Math.min(share * HRS_PER_DEV_DAY * Object.keys(assigneeRem).length, HRS_PER_DEV_DAY);
+  }, 0));
+  const devCount = Object.keys(assigneeRem).length || 1;
+
+  // ── Timeline checks ────────────────────────────────────────────────────────
   if(p.devBy && p.devBy !== '—') {
     const devDate = new Date(p.devBy); devDate.setHours(0,0,0,0);
     daysLeft = Math.ceil((devDate - now) / 86400000);
 
-    // Try to find a start date — use earliest child ticket created date or fall back to 90 days before devBy
-    const startDate = new Date(devDate); startDate.setDate(startDate.getDate() - 90);
-    const totalSpan = Math.max(1, Math.ceil((devDate - startDate) / 86400000));
-    const elapsed   = Math.max(0, Math.ceil((now - startDate) / 86400000));
-    expectedPct = Math.min(100, Math.round((elapsed / totalSpan) * 100));
+    if(p.loe > 0) {
+      // How many calendar days does this work actually require at team capacity?
+      const daysNeeded = Math.ceil(p.rem / effectiveDailyCapacity);
+      // Latest date work should begin (with buffer)
+      latestStart = new Date(devDate);
+      latestStart.setDate(latestStart.getDate() - daysNeeded - START_BUFFER_DAYS);
 
-    const gap = expectedPct - pct; // positive = behind schedule
+      const workShouldHaveStarted = now >= latestStart;
+      const daysUntilLatestStart  = Math.ceil((latestStart - now) / 86400000);
 
-    if(daysLeft < 0) {
-      reasons.push({ level:'red', icon:'ti-calendar-x', text:`Dev deadline passed ${Math.abs(daysLeft)} day${Math.abs(daysLeft)!==1?'s':''} ago (was ${fmtDate(p.devBy)}) — ${p.rem} hrs still remaining` });
-      topLevel = 'red';
-    } else if(daysLeft <= 14 && pct < 85) {
-      reasons.push({ level:'red', icon:'ti-alarm', text:`Only ${daysLeft} day${daysLeft!==1?'s':''} until dev deadline (${fmtDate(p.devBy)}) with ${100-pct}% of work still remaining (${p.rem} hrs)` });
-      topLevel = 'red';
-    } else if(gap >= 30) {
-      reasons.push({ level:'red', icon:'ti-trending-down', text:`Progress (${pct}%) is ${gap} points behind schedule — expected ~${expectedPct}% complete by now given the ${fmtDate(p.devBy)} deadline` });
-      topLevel = 'red';
-    } else if(gap >= 15) {
-      reasons.push({ level:'amber', icon:'ti-trending-down', text:`Progress (${pct}%) is running ${gap} points behind expected pace (~${expectedPct}%) for the ${fmtDate(p.devBy)} deadline` });
-      if(!topLevel) topLevel = 'amber';
-    } else if(daysLeft <= 30 && pct < 70) {
-      reasons.push({ level:'amber', icon:'ti-clock', text:`${daysLeft} days until deadline (${fmtDate(p.devBy)}) — only ${pct}% complete with ${p.rem} hrs left` });
-      if(!topLevel) topLevel = 'amber';
+      if(daysLeft < 0) {
+        // Deadline already passed
+        reasons.push({ level:'red', icon:'ti-calendar-x', text:`Dev deadline passed ${Math.abs(daysLeft)} day${Math.abs(daysLeft)!==1?'s':''} ago (was ${fmtDate(p.devBy)}) — ${p.rem} hrs still remaining` });
+        topLevel = 'red';
+      } else if(workShouldHaveStarted && pct === 0) {
+        // Should have started but hasn't
+        const overdueBy = Math.abs(daysUntilLatestStart);
+        const capStr = `~${Math.round(effectiveDailyCapacity * 10) / 10} hrs/day effective capacity`;
+        reasons.push({ level:'red', icon:'ti-player-play', text:`No work logged yet — needed to start by ${fmtDate(latestStart)} to fit ${p.rem} hrs of remaining work before the ${fmtDate(p.devBy)} deadline (${capStr}). ${overdueBy} day${overdueBy!==1?'s':''} overdue to begin.` });
+        topLevel = 'red';
+      } else if(workShouldHaveStarted && p.rem > 0) {
+        // Work started — check if remaining hours can still fit
+        const hrsPerDayNeeded = daysLeft > 0 ? p.rem / daysLeft : Infinity;
+        const capacityRatio = hrsPerDayNeeded / effectiveDailyCapacity;
+
+        if(capacityRatio > 1.25) {
+          reasons.push({ level:'red', icon:'ti-trending-down', text:`${p.rem} hrs remaining but only ${daysLeft} day${daysLeft!==1?'s':''} left — needs ${Math.round(hrsPerDayNeeded * 10) / 10} hrs/day vs ~${Math.round(effectiveDailyCapacity * 10) / 10} hrs/day effective capacity` });
+          topLevel = 'red';
+        } else if(capacityRatio > 0.85) {
+          reasons.push({ level:'amber', icon:'ti-clock', text:`${p.rem} hrs remaining in ${daysLeft} day${daysLeft!==1?'s':''} — requires ~${Math.round(hrsPerDayNeeded * 10) / 10} hrs/day, close to full effective capacity of ~${Math.round(effectiveDailyCapacity * 10) / 10} hrs/day` });
+          if(!topLevel) topLevel = 'amber';
+        }
+      }
+      // else: hasn't needed to start yet — no flag
+    } else {
+      // No LOE — can still flag overdue deadline
+      if(daysLeft < 0) {
+        reasons.push({ level:'red', icon:'ti-calendar-x', text:`Dev deadline passed ${Math.abs(daysLeft)} day${Math.abs(daysLeft)!==1?'s':''} ago (was ${fmtDate(p.devBy)})` });
+        topLevel = 'red';
+      }
     }
   } else {
     reasons.push({ level:'info', icon:'ti-calendar-off', text:'No dev deadline set — risk timeline cannot be calculated' });
@@ -2696,26 +2760,14 @@ function computeRisk(p) {
     if(!topLevel) topLevel = 'amber';
   }
 
-  // ── Large remaining work ───────────────────────────────────────────────────
-  if(p.rem > 500 && daysLeft !== null && daysLeft > 0) {
-    const hrsPerDay = p.rem / daysLeft;
-    if(hrsPerDay > 40) {
-      reasons.push({ level:'red', icon:'ti-stack', text:`${p.rem} hrs remaining with ${daysLeft} days left = ${Math.round(hrsPerDay)} hrs/day needed (team capacity likely ~40 hrs/day)` });
-      topLevel = 'red';
-    } else if(hrsPerDay > 20) {
-      reasons.push({ level:'amber', icon:'ti-stack', text:`${p.rem} hrs remaining — requires ~${Math.round(hrsPerDay)} hrs/day to meet deadline` });
-      if(!topLevel) topLevel = 'amber';
-    }
-  }
-
-  // ── Blocked or stalled ─────────────────────────────────────────────────────
+  // ── Blocked ────────────────────────────────────────────────────────────────
   const statusL = (p.status||'').toLowerCase();
   if(statusL.includes('blocked') || statusL.includes('impediment')) {
     reasons.push({ level:'red', icon:'ti-ban', text:`Initiative is currently blocked (status: ${p.status})` });
     topLevel = 'red';
   }
 
-  return { level: topLevel, reasons, pct, expectedPct, daysLeft };
+  return { level: topLevel, reasons, pct, latestStart, daysLeft };
 }
 
 function fmtDate(d) {
@@ -2780,7 +2832,7 @@ function renderRiskTab(){
         ? `<div style="display:flex;align-items:center;gap:8px;flex:1;">
             <div class="progress-bar" style="min-width:100px;flex:1;max-width:180px;"><div class="progress-fill" style="width:${risk.pct}%;background:${barColor(risk.pct)};"></div></div>
             <span style="font-size:11px;color:var(--text-2);font-weight:600;">${risk.pct}% done</span>
-            ${risk.expectedPct!==null?`<span style="font-size:11px;color:var(--text-3);">· ~${risk.expectedPct}% expected</span>`:''}
+            ${risk.latestStart!==null?`<span style="font-size:11px;color:var(--text-3);">· start by ${fmtDate(risk.latestStart)}</span>`:''}
            </div>`
         : '<span style="font-size:11px;color:var(--text-3);">No LOE estimate</span>';
 
