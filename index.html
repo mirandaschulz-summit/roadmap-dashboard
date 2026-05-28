@@ -1764,7 +1764,7 @@ function renderProjectsTab(){
               ? `<td><span class="risk-badge-inline" style="background:var(--success-bg);color:var(--success-text);border:1px solid rgba(29,158,117,0.2);"><i class="ti ti-circle-check" style="font-size:10px;"></i>ON TRACK</span></td>`
               : `<td><span style="font-size:11px;color:var(--text-3);">—</span></td>`);
         const memberId = `gmember-${gi}-${pi}`;
-        html += `<tr class="accordion-row level-epic" data-group="group-${gi}" data-s="${p.summary.toLowerCase()}" data-st="${(p.status||'').toLowerCase()}" style="display:none;">
+        html += `<tr class="accordion-row level-epic" data-group="group-${gi}" data-s="${esc(p.summary).toLowerCase()}" data-st="${(p.status||'').toLowerCase()}" style="display:none;">
           <td colspan="2" style="padding-left:28px;">
             <div style="display:flex;align-items:center;gap:4px;">
               ${hasChildren ? `<button class="expand-btn" id="btn-${memberId}" onclick="toggleAccordion('${memberId}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
@@ -1772,7 +1772,7 @@ function renderProjectsTab(){
               <a href="https://${domain}/browse/${p.key}" target="_blank" style="font-weight:600;font-size:12px;margin-left:4px;white-space:nowrap;">${p.key}</a>
             </div>
           </td>
-          <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;font-size:12px;" title="${p.summary}">${p.summary}</td>
+          <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;font-size:12px;" title="${esc(p.summary)}">${esc(p.summary)}</td>
           <td><span class="badge b-purple">Initiative</span></td>
           <td style="font-weight:600;font-size:12px;">${p.loe ? Math.round(p.loe) : '—'}</td>
           <td style="font-weight:600;font-size:12px;color:${p.rem>0?'var(--text)':'var(--text-3)'}">${p.rem||'0'}</td>
@@ -1793,7 +1793,7 @@ function renderProjectsTab(){
           const epPct = epicLOE>0 ? Math.min(100,Math.round(epicLogged/epicLOE*100)) : 0;
           const epicRem = epicLOE > 0 ? Math.max(0, Math.round((epicLOE - epicLogged)*10)/10) : 0;
           const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epPct}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${epPct}%</span></div>` : '—';
-          html+=`<tr class="accordion-row level-epic" data-group="${memberId}" data-s="${ep.summary.toLowerCase()}" data-st="${(ep.status||'').toLowerCase()}" style="display:none;">
+          html+=`<tr class="accordion-row level-epic" data-group="${memberId}" data-s="${esc(ep.summary).toLowerCase()}" data-st="${(ep.status||'').toLowerCase()}" style="display:none;">
             <td colspan="2" style="padding-left:56px;">
               <div style="display:flex;align-items:center;gap:4px;">
                 ${epicTickets.length>0 ? `<button class="expand-btn" id="btn-gep-${gi}-${pi}-${ep.key}" onclick="toggleAccordion('gep-${gi}-${pi}-${ep.key}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
@@ -1801,7 +1801,7 @@ function renderProjectsTab(){
                 <a href="https://${domain}/browse/${ep.key}" target="_blank" style="font-size:12px;margin-left:4px;white-space:nowrap;">${ep.key}</a>
               </div>
             </td>
-            <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${ep.summary}">${ep.summary}</td>
+            <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(ep.summary)}">${esc(ep.summary)}</td>
             <td><span class="badge b-amber">Epic</span></td>
             <td style="font-size:12px;">${epicLOE||'—'}</td>
             <td style="font-size:12px;color:${epicRem>0?'var(--text)':'var(--text-3)'};">${epicRem||'0'}</td>
@@ -1819,7 +1819,7 @@ function renderProjectsTab(){
             const fileIcon = isBug ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>` : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
             const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
             const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
-            html+=`<tr class="accordion-row level-ticket" data-group="gep-${gi}-${pi}-${ep.key}" data-s="${t.summary.toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
+            html+=`<tr class="accordion-row level-ticket" data-group="gep-${gi}-${pi}-${ep.key}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
               <td colspan="2" style="padding-left:84px;">
                 <div style="display:flex;align-items:center;gap:5px;">
                   <span style="width:20px;flex-shrink:0;"></span>
@@ -1827,7 +1827,7 @@ function renderProjectsTab(){
                   <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
                 </div>
               </td>
-              <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
+              <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
               <td>${typeBadge}</td>
               <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
               <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
@@ -1849,7 +1849,7 @@ function renderProjectsTab(){
           const fileIcon = isBug ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>` : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
           const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
           const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
-          html+=`<tr class="accordion-row level-ticket" data-group="${memberId}" data-s="${t.summary.toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
+          html+=`<tr class="accordion-row level-ticket" data-group="${memberId}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
             <td colspan="2" style="padding-left:56px;">
               <div style="display:flex;align-items:center;gap:5px;">
                 <span style="width:20px;flex-shrink:0;"></span>
@@ -1857,7 +1857,7 @@ function renderProjectsTab(){
                 <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
               </div>
             </td>
-            <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
+            <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
             <td>${typeBadge}</td>
             <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
             <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
@@ -1890,7 +1890,7 @@ function renderProjectsTab(){
           ? `<td><span class="risk-badge-inline" style="background:var(--success-bg);color:var(--success-text);border:1px solid rgba(29,158,117,0.2);"><i class="ti ti-circle-check" style="font-size:10px;"></i>ON TRACK</span></td>`
           : `<td><span style="font-size:11px;color:var(--text-3);">—</span></td>`);
 
-    html+=`<tr class="init-row" data-s="${p.summary.toLowerCase()}" data-st="${(p.status||'').toLowerCase()}" style="background:var(--surface);">
+    html+=`<tr class="init-row" data-s="${esc(p.summary).toLowerCase()}" data-st="${(p.status||'').toLowerCase()}" style="background:var(--surface);">
       <td colspan="2" style="padding-left:8px;">
         <div style="display:flex;align-items:center;gap:4px;">
           ${hasChildren ? `<button class="expand-btn" id="btn-init-${pi}" onclick="toggleAccordion('init-${pi}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
@@ -1898,7 +1898,7 @@ function renderProjectsTab(){
           <a href="https://${domain}/browse/${p.key}" target="_blank" style="font-weight:600;font-size:13px;margin-left:4px;white-space:nowrap;">${p.key}</a>
         </div>
       </td>
-      <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${p.summary}">${p.summary}</td>
+      <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(p.summary)}">${esc(p.summary)}</td>
       <td><span class="badge b-purple">Initiative</span></td>
       <td style="font-weight:600;">${p.loe ? Math.round(p.loe) : '—'}</td>
       <td style="font-weight:600;color:${p.rem>0?'var(--text)':'var(--text-3)'}">${p.rem||'0'}</td>
@@ -1920,7 +1920,7 @@ function renderProjectsTab(){
       const epicRem = epicLOE > 0 ? Math.max(0, Math.round((epicLOE - epicLogged)*10)/10) : 0;
       const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epPct}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${epPct}%</span></div>` : '—';
 
-      html+=`<tr class="accordion-row level-epic" data-group="init-${pi}" data-s="${ep.summary.toLowerCase()}" data-st="${(ep.status||'').toLowerCase()}" style="display:none;">
+      html+=`<tr class="accordion-row level-epic" data-group="init-${pi}" data-s="${esc(ep.summary).toLowerCase()}" data-st="${(ep.status||'').toLowerCase()}" style="display:none;">
         <td colspan="2" style="padding-left:32px;">
           <div style="display:flex;align-items:center;gap:4px;">
             ${epicTickets.length>0 ? `<button class="expand-btn" id="btn-epic-${pi}-${ep.key}" onclick="toggleAccordion('epic-${pi}-${ep.key}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
@@ -1928,7 +1928,7 @@ function renderProjectsTab(){
             <a href="https://${domain}/browse/${ep.key}" target="_blank" style="font-size:12px;margin-left:4px;white-space:nowrap;">${ep.key}</a>
           </div>
         </td>
-        <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${ep.summary}">${ep.summary}</td>
+        <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(ep.summary)}">${esc(ep.summary)}</td>
         <td><span class="badge b-amber">Epic</span></td>
         <td style="font-size:12px;">${epicLOE||'—'}</td>
         <td style="font-size:12px;color:${epicRem>0?'var(--text)':'var(--text-3)'};">${epicRem||'0'}</td>
@@ -1949,7 +1949,7 @@ function renderProjectsTab(){
           : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
         const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
       const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
-        html+=`<tr class="accordion-row level-ticket" data-group="epic-${pi}-${ep.key}" data-s="${t.summary.toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
+        html+=`<tr class="accordion-row level-ticket" data-group="epic-${pi}-${ep.key}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
           <td colspan="2" style="padding-left:60px;">
             <div style="display:flex;align-items:center;gap:5px;">
               <span style="width:20px;flex-shrink:0;"></span>
@@ -1957,7 +1957,7 @@ function renderProjectsTab(){
               <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
             </div>
           </td>
-          <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
+          <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
           <td>${typeBadge}</td>
           <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
           <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
@@ -1982,7 +1982,7 @@ function renderProjectsTab(){
         : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
       const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
       const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
-      html+=`<tr class="accordion-row level-ticket" data-group="init-${pi}" data-s="${t.summary.toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
+      html+=`<tr class="accordion-row level-ticket" data-group="init-${pi}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
         <td colspan="2" style="padding-left:32px;">
           <div style="display:flex;align-items:center;gap:5px;">
             <span style="width:20px;flex-shrink:0;"></span>
@@ -1990,7 +1990,7 @@ function renderProjectsTab(){
             <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
           </div>
         </td>
-        <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${t.summary}">${t.summary}</td>
+        <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
         <td>${typeBadge}</td>
         <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
         <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
@@ -2125,7 +2125,7 @@ function renderHaltedTab(){
           <a href="https://${domain}/browse/${p.key}" target="_blank" style="font-weight:600;font-size:13px;margin-left:4px;white-space:nowrap;">${p.key}</a>
         </div>
       </td>
-      <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${p.summary}">${p.summary}</td>
+      <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(p.summary)}">${esc(p.summary)}</td>
       <td><span class="badge b-purple">Initiative</span></td>
       <td style="font-weight:600;">${p.loe ? Math.round(p.loe) : '—'}</td>
       <td style="font-weight:600;color:${p.rem>0?'var(--text)':'var(--text-3)'}">${p.rem||'0'}</td>
@@ -2155,7 +2155,7 @@ function renderHaltedTab(){
             <a href="https://${domain}/browse/${ep.key}" target="_blank" style="font-size:12px;margin-left:4px;white-space:nowrap;">${ep.key}</a>
           </div>
         </td>
-        <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${ep.summary}">${ep.summary}</td>
+        <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(ep.summary)}">${esc(ep.summary)}</td>
         <td><span class="badge b-amber">Epic</span></td>
         <td style="font-size:12px;">${epicLOE||'—'}</td>
         <td style="font-size:12px;color:${epicRem>0?'var(--text)':'var(--text-3)'};">${epicRem||'0'}</td>
@@ -2380,10 +2380,10 @@ function renderGanttEngineer(eng, engData, zoom, monday, totalMs, jiraBase) {
     const barLabel = b.summary.length > 30 ? b.summary.substring(0,28)+'…' : b.summary;
 
     return `<div class="gantt-row">
-      <div class="gantt-row-lbl" title="${b.summary}">
+      <div class="gantt-row-lbl" title="${esc(b.summary)}">
         <div class="gantt-row-lbl-name">
           <i class="ti ti-layout-board-split" style="color:${color};font-size:11px;flex-shrink:0;"></i>
-          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.summary}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(b.summary)}</span>
         </div>
         <div class="gantt-row-lbl-sub">${b.rem > 0 ? b.rem+'h rem' : '<span style="color:var(--success-text)">Done</span>'} &middot; ${Math.round(b.loe)}h total</div>
       </div>
@@ -2774,6 +2774,11 @@ function computeRisk(p) {
   return { level: topLevel, reasons, pct, latestStart, daysLeft };
 }
 
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function fmtDate(d) {
   if(!d || d==='—') return '—';
   try { return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){ return d; }
@@ -2843,7 +2848,7 @@ function renderRiskTab(){
       html += `<div class="risk-initiative-card" id="risk-${p.key}" style="border-left:3px solid ${levelColor[risk.level]};">
         <div class="risk-init-header">
           <span class="risk-init-key">${p.key}</span>
-          <span class="risk-init-name" title="${p.summary}">${p.summary}</span>
+          <span class="risk-init-name" title="${esc(p.summary)}">${p.summary}</span>
           <span class="badge ${levelBadge[risk.level]}" style="flex-shrink:0;">${levelLabel[risk.level]}</span>
         </div>
         <div class="risk-init-meta">
