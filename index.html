@@ -1692,17 +1692,17 @@ function renderProjectsTab(){
     </colgroup>
     <thead><tr>
       <th></th>
-      <th>Key <span class="info-tip" data-tip="The Jira issue key linking directly to the initiative in Jira.">i</span></th>
-      <th>Summary <span class="info-tip" data-tip="The initiative title pulled from Jira. Groups roll up multiple initiatives under one label.">i</span></th>
-      <th>Type <span class="info-tip" data-tip="Initiative = a single Jira epic/initiative.\nGroup = multiple initiatives bundled together for reporting.">i</span></th>
-      <th>LOE (hrs) <span class="info-tip" data-tip="Level of Effort — the original estimated hours across all child tickets. Pulled from story points or original estimates in Jira.">i</span></th>
-      <th>Rem. <span class="info-tip" data-tip="Remaining hours of work left. Calculated as LOE minus hours already logged (or marked done) on child tickets.">i</span></th>
-      <th class="th-sort${projSort.col==='progress'?' sorted':''}" onclick="sortProjects('progress')">Progress <span class="info-tip" data-tip="% complete based on hours: (LOE - Remaining) ÷ LOE. Bar color reflects urgency relative to the go-live date.">i</span><span class="sort-icon"><i class="ti ti-${projSort.col==='progress'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
-      <th class="th-sort${projSort.col==='devBy'?' sorted':''}" onclick="sortProjects('devBy')">Dev By <span class="info-tip" data-tip="Target date for development to be complete. Set on the initiative in Jira.">i</span><span class="sort-icon"><i class="ti ti-${projSort.col==='devBy'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
-      <th class="th-sort${projSort.col==='goLive'?' sorted':''}" onclick="sortProjects('goLive')">Go-Live <span class="info-tip" data-tip="Target date for the initiative to be live in production. Set on the initiative in Jira.">i</span><span class="sort-icon"><i class="ti ti-${projSort.col==='goLive'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
-      <th>Status <span class="info-tip" data-tip="Current Jira workflow status of the initiative (e.g. Open, In Progress, Dev Complete, Done).">i</span></th>
-      <th>Assignee(s) <span class="info-tip" data-tip="People assigned to child tickets within this initiative. Up to 3 shown; +N indicates additional assignees.">i</span></th>
-      <th class="th-sort${projSort.col==='risk'?' sorted':''}" onclick="sortProjects('risk')">Risk <span class="info-tip" data-tip="CRITICAL: behind schedule with low completion.\nAT RISK: pace may miss the go-live date.\nON TRACK: projected to complete on time.\nNO LOE ADDED: no hours estimated yet — risk cannot be assessed.">i</span><span class="sort-icon"><i class="ti ti-${projSort.col==='risk'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th>Key</th>
+      <th>Summary</th>
+      <th>Type</th>
+      <th>LOE (hrs)</th>
+      <th>Rem.</th>
+      <th class="th-sort${projSort.col==='progress'?' sorted':''}" onclick="sortProjects('progress')">Progress <span class="sort-icon"><i class="ti ti-${projSort.col==='progress'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th class="th-sort${projSort.col==='devBy'?' sorted':''}" onclick="sortProjects('devBy')">Dev By <span class="sort-icon"><i class="ti ti-${projSort.col==='devBy'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th class="th-sort${projSort.col==='goLive'?' sorted':''}" onclick="sortProjects('goLive')">Go-Live <span class="sort-icon"><i class="ti ti-${projSort.col==='goLive'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th>Status</th>
+      <th>Assignee(s)</th>
+      <th class="th-sort${projSort.col==='risk'?' sorted':''}" onclick="sortProjects('risk')">Risk <span class="sort-icon"><i class="ti ti-${projSort.col==='risk'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
     </tr></thead>
     <tbody id="projBody">`;
 
