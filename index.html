@@ -1451,14 +1451,17 @@ async function syncJira() {
           const orig = parseFloat(c.fields.timeoriginalestimate||0);
           const statusName = (c.fields.status?.name||'').toLowerCase();
           const isDone = statusName.includes('done') || statusName.includes('closed') || statusName.includes('resolved') || statusName.includes('verified') || statusName.includes('on prod') || statusName.includes('dev complete');
-          const rem = isDone ? 0 : parseFloat(c.fields.timeestimate||c.fields.timeoriginalestimate||0);
+          const jiraRem = isDone ? 0 : parseFloat(c.fields.timeestimate||c.fields.timeoriginalestimate||0);
           const worklogs = worklogMap[c.key] || [];
           // Use actual worklog sum if available, otherwise fall back to estimate math
           const workloggedSecs = worklogs.reduce((a,w) => a + (w.timeSpentSeconds||0), 0);
           const loggedSecs = workloggedSecs > 0
             ? workloggedSecs
-            : (isDone ? orig : Math.max(0, orig - rem));
+            : (isDone ? orig : Math.max(0, orig - jiraRem));
           const loggedHrs = Math.round(loggedSecs / 3600 * 10) / 10;
+          const loeHrs = orig > 0 ? Math.round(orig/3600) : Math.round(getLOE(c.fields)||0);
+          // Remaining = max(0, LOE - logged) so logged+rem never exceeds LOE
+          const remainingHrs = isDone ? 0 : Math.max(0, Math.round((loeHrs - loggedHrs) * 10) / 10);
           return {
             key:c.key, summary:c.fields.summary,
             type: c.fields.issuetype?.name||'',
@@ -1466,8 +1469,8 @@ async function syncJira() {
             isDone,
             parentKey: c.fields.parent?.key||null,
             assignee:c.fields.assignee?.displayName||'—',
-            loe: orig > 0 ? Math.round(orig/3600) : Math.round(getLOE(c.fields)||0),
-            remaining: isDone ? 0 : (orig > 0 ? Math.round(rem/3600*10)/10 : 0),
+            loe: loeHrs,
+            remaining: remainingHrs,
             logged: loggedHrs,
             dueDate:parseDate(getF(c.fields,S.fields.devBy)||c.fields.duedate)||'—',
             worklogs
