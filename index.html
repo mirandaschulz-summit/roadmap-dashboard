@@ -1658,16 +1658,16 @@ function renderProjectsTab(){
       + '</div></div></div>';
   })()}
 
-  <div class="table-wrap"><table style="table-layout:fixed;width:100%;min-width:1120px;">
+  <div class="table-wrap"><table style="table-layout:fixed;width:100%;min-width:1180px;">
     <colgroup>
       <col style="width:28px;">
       <col style="width:108px;">
-      <col style="width:220px;">
+      <col style="width:300px;">
       <col style="width:90px;">
+      <col style="width:60px;">
+      <col style="width:56px;">
+      <col style="width:84px;">
       <col style="width:68px;">
-      <col style="width:62px;">
-      <col style="width:90px;">
-      <col style="width:72px;">
       <col style="width:68px;">
       <col style="width:96px;">
       <col style="width:110px;">
@@ -1686,9 +1686,15 @@ function renderProjectsTab(){
     <tbody id="projBody">`;
 
   // ── Sort initiatives ───────────────────────────────────────────────────────
-  const riskOrder = { red: 0, amber: 1, null: 2 };
+  const riskRank = p => {
+    if (!hasTickets(p)) return 3; // No tickets yet — last
+    const level = computeRisk(p).level;
+    if (level === 'red') return 0;   // Critical
+    if (level === 'amber') return 1; // At Risk
+    return 2;                        // On Track / Done
+  };
   const sortedData = [...d].sort((a, b) => {
-    if(!projSort.col) return 0;
+    if(!projSort.col) return riskRank(a) - riskRank(b); // default: risk order
     let av, bv;
     if(projSort.col === 'progress') {
       av = a.loe > 0 ? (a.loe - a.rem) / a.loe : 0;
@@ -1700,8 +1706,8 @@ function renderProjectsTab(){
       av = a.goLive && a.goLive !== '—' ? new Date(a.goLive).getTime() : Infinity;
       bv = b.goLive && b.goLive !== '—' ? new Date(b.goLive).getTime() : Infinity;
     } else if(projSort.col === 'risk') {
-      av = riskOrder[computeRisk(a).level] ?? 2;
-      bv = riskOrder[computeRisk(b).level] ?? 2;
+      av = riskRank(a);
+      bv = riskRank(b);
     }
     return av === bv ? 0 : (av < bv ? -1 : 1) * projSort.dir;
   });
