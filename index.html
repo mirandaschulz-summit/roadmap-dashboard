@@ -696,6 +696,14 @@ td:last-child { overflow: visible; }
 /* ── Empty state ── */
 .empty-state { text-align: center; padding: 64px 20px; color: var(--text-3); }
 .empty-state i { font-size: 40px; margin-bottom: 16px; display: block; color: var(--primary-disabled); }
+/* ── Info tooltips ── */
+.info-tip { display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:50%; background:var(--border-mid); color:var(--text-3); font-size:9px; font-weight:700; cursor:default; margin-left:4px; position:relative; vertical-align:middle; flex-shrink:0; }
+.info-tip::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:var(--text); color:var(--surface); font-size:11px; font-weight:400; line-height:1.5; padding:7px 10px; border-radius:6px; white-space:pre-line; width:220px; pointer-events:none; opacity:0; transition:opacity 0.15s; z-index:999; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+.info-tip:hover::after { opacity:1; }
+.info-tip::before { content:''; position:absolute; bottom:calc(100% + 2px); left:50%; transform:translateX(-50%); border:4px solid transparent; border-top-color:var(--text); pointer-events:none; opacity:0; transition:opacity 0.15s; z-index:999; }
+.info-tip:hover::before { opacity:1; }
+.info-tip.tip-down::after { bottom:auto; top:calc(100% + 6px); }
+.info-tip.tip-down::before { bottom:auto; top:calc(100% + 2px); border-top-color:transparent; border-bottom-color:var(--text); }
 .empty-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--text-2); }
 .empty-sub { font-size: 13px; font-weight: 400; }
 
@@ -1442,11 +1450,15 @@ async function syncJira() {
       const mappedChildren = children.map(c=>{
           const orig = parseFloat(c.fields.timeoriginalestimate||0);
           const statusName = (c.fields.status?.name||'').toLowerCase();
-          const isDone = (statusName.includes('done') || statusName.includes('closed') || statusName.includes('resolved') || statusName.includes('verified') || statusName.includes('on prod'))
-            && !statusName.includes('dev complete') && !statusName.includes('dev progress');
+          const isDone = statusName.includes('done') || statusName.includes('closed') || statusName.includes('resolved') || statusName.includes('verified') || statusName.includes('on prod') || statusName.includes('dev complete');
           const rem = isDone ? 0 : parseFloat(c.fields.timeestimate||c.fields.timeoriginalestimate||0);
-          const logged = orig > 0 ? Math.max(0, orig - rem) : 0;
           const worklogs = worklogMap[c.key] || [];
+          // Use actual worklog sum if available, otherwise fall back to estimate math
+          const workloggedSecs = worklogs.reduce((a,w) => a + (w.timeSpentSeconds||0), 0);
+          const loggedSecs = workloggedSecs > 0
+            ? workloggedSecs
+            : (isDone ? orig : Math.max(0, orig - rem));
+          const loggedHrs = Math.round(loggedSecs / 3600 * 10) / 10;
           return {
             key:c.key, summary:c.fields.summary,
             type: c.fields.issuetype?.name||'',
@@ -1456,7 +1468,7 @@ async function syncJira() {
             assignee:c.fields.assignee?.displayName||'—',
             loe: orig > 0 ? Math.round(orig/3600) : Math.round(getLOE(c.fields)||0),
             remaining: isDone ? 0 : (orig > 0 ? Math.round(rem/3600*10)/10 : 0),
-            logged: isDone ? (orig > 0 ? Math.round(orig/3600*10)/10 : getLOE(c.fields)) : (orig > 0 ? Math.round(logged/3600*10)/10 : 0),
+            logged: loggedHrs,
             dueDate:parseDate(getF(c.fields,S.fields.devBy)||c.fields.duedate)||'—',
             worklogs
           };
@@ -1557,22 +1569,22 @@ function renderProjectsTab(){
 
   let html=`<div class="metrics" style="margin-bottom:20px;">
     <div class="metric">
-      <div class="metric-label">Roadmap Initiatives</div>
+      <div class="metric-label">Roadmap Initiatives <span class="info-tip tip-down" data-tip="Total number of active initiatives being tracked. Halted initiatives are excluded and shown on the Halted tab.">i</span></div>
       <div class="metric-value">${d.length}</div>
       <div class="metric-sub">${d.reduce((a,p)=>a+p.childCount,0)} child issues</div>
     </div>
     <div class="metric">
-      <div class="metric-label">Original LOE (hrs)</div>
+      <div class="metric-label">Original LOE (hrs) <span class="info-tip tip-down" data-tip="Sum of all original hour estimates across every child ticket in every initiative. Based on Jira's original estimate field or story points.">i</span></div>
       <div class="metric-value">${totLOE.toLocaleString()}</div>
       <div class="metric-sub">total estimated hours</div>
     </div>
     <div class="metric">
-      <div class="metric-label">Remaining (hrs)</div>
+      <div class="metric-label">Remaining (hrs) <span class="info-tip tip-down" data-tip="Total hours still left to complete across all initiatives. Calculated as Original LOE minus hours logged on completed tickets.\n\n% complete = (LOE - Remaining) ÷ LOE">i</span></div>
       <div class="metric-value">${totRem.toLocaleString()}</div>
       <div class="metric-sub">${pctDone}% complete overall</div>
     </div>
     <div class="metric" style="border-color:var(--border);">
-      <div class="metric-label">Risk Summary</div>
+      <div class="metric-label">Risk Summary <span class="info-tip tip-down" data-tip="Risk is assessed only for initiatives with LOE estimates.\n\nCRITICAL: significantly behind pace to hit go-live.\nAT RISK: projected to miss go-live at current pace.\nON TRACK: projected to finish on time.\nNO LOE: no estimates added yet.">i</span></div>
       <div style="display:flex;align-items:baseline;gap:10px;margin-top:4px;flex-wrap:wrap;">
         <span style="display:flex;align-items:center;gap:5px;">
           <span style="font-size:22px;font-weight:700;color:var(--danger);line-height:1;">${critCount}</span>
@@ -1640,7 +1652,7 @@ function renderProjectsTab(){
       + '<div style="font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;"><i class="ti ti-target" style="color:var(--primary);font-size:16px;"></i>Strategic Initiative Completion</div>'
       + '<span style="font-size:11px;color:var(--text-3);">' + total + ' tickets tracked</span></div>'
       + '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:16px;align-items:center;">'
-      + '<div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Overall Completion</div>'
+      + '<div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Overall Completion <span class="info-tip" data-tip="% of all child tickets across every initiative that are in a Done/Closed/Resolved status.\n\nEach ticket counts equally regardless of size.">i</span></div>'
       + '<div style="display:flex;align-items:center;gap:10px;"><div style="flex:1;height:10px;background:var(--border);border-radius:10px;overflow:hidden;max-width:220px;"><div style="height:100%;border-radius:10px;background:' + completionColor + ';width:' + completionPct + '%;transition:width .5s ease;"></div></div>'
       + '<span style="font-size:20px;font-weight:800;color:' + completionColor + ';line-height:1;">' + completionPct + '%</span></div>'
       + '<div style="margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;">'
@@ -1648,15 +1660,15 @@ function renderProjectsTab(){
       + '<span style="font-size:11px;color:var(--primary);font-weight:600;"><span style="font-size:13px;font-weight:800;">' + inProg + '</span> In Progress</span>'
       + '<span style="font-size:11px;color:var(--text-3);font-weight:600;"><span style="font-size:13px;font-weight:800;">' + notStarted + '</span> Not Started</span></div></div>'
       + '<div style="text-align:center;padding:10px 8px;background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);">'
-      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Delivery Health</div>'
+      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Delivery Health <span class="info-tip" data-tip="% of initiatives (with LOE) that are either Done or On Track to hit their go-live date.\n\nExcludes initiatives with no LOE estimates.\n\nGreen = 99%+  Orange = 75–98%  Red = below 75%">i</span></div>'
       + '<div style="font-size:26px;font-weight:800;color:' + healthColor + ';line-height:1;">' + deliveryHealth + '%</div>'
       + '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">on track or done</div></div>'
       + '<div style="text-align:center;padding:10px 8px;background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);">'
-      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Avg Progress (In Progress)</div>'
+      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Avg Progress (In Progress) <span class="info-tip" data-tip="Average % complete across initiatives currently In Progress or Dev Complete (with LOE).\n\nProgress = (LOE - Remaining) ÷ LOE for each initiative.">i</span></div>'
       + '<div style="font-size:26px;font-weight:800;color:var(--text);line-height:1;">' + avgProgress + '%</div>'
       + '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">avg across ' + inProgressWithLOE.length + ' in-progress initiatives</div></div>'
       + '<div style="text-align:center;padding:10px 8px;background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);">'
-      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Next Deadline</div>'
+      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Next Deadline <span class="info-tip" data-tip="The nearest upcoming Dev By date across all active initiatives.">i</span></div>'
       + (upcoming
           ? '<div style="font-size:15px;font-weight:800;color:var(--text);line-height:1.2;">' + new Date(upcoming.devBy).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + '</div><div style="font-size:10px;color:var(--text-3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + upcoming.summary + '">' + (upcoming.summary.length>22?upcoming.summary.slice(0,20)+'…':upcoming.summary) + '</div>'
           : '<div style="font-size:15px;font-weight:700;color:var(--text-3);">None set</div>')
@@ -1680,13 +1692,17 @@ function renderProjectsTab(){
     </colgroup>
     <thead><tr>
       <th></th>
-      <th>Key</th><th>Summary</th><th>Type</th>
-      <th>LOE (hrs)</th><th>Rem.</th>
-      <th class="th-sort${projSort.col==='progress'?' sorted':''}" onclick="sortProjects('progress')">Progress<span class="sort-icon"><i class="ti ti-${projSort.col==='progress'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
-      <th class="th-sort${projSort.col==='devBy'?' sorted':''}" onclick="sortProjects('devBy')">Dev By<span class="sort-icon"><i class="ti ti-${projSort.col==='devBy'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
-      <th class="th-sort${projSort.col==='goLive'?' sorted':''}" onclick="sortProjects('goLive')">Go-Live<span class="sort-icon"><i class="ti ti-${projSort.col==='goLive'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
-      <th>Status</th><th>Assignee(s)</th>
-      <th class="th-sort${projSort.col==='risk'?' sorted':''}" onclick="sortProjects('risk')">Risk<span class="sort-icon"><i class="ti ti-${projSort.col==='risk'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th>Key <span class="info-tip" data-tip="The Jira issue key linking directly to the initiative in Jira.">i</span></th>
+      <th>Summary <span class="info-tip" data-tip="The initiative title pulled from Jira. Groups roll up multiple initiatives under one label.">i</span></th>
+      <th>Type <span class="info-tip" data-tip="Initiative = a single Jira epic/initiative.\nGroup = multiple initiatives bundled together for reporting.">i</span></th>
+      <th>LOE (hrs) <span class="info-tip" data-tip="Level of Effort — the original estimated hours across all child tickets. Pulled from story points or original estimates in Jira.">i</span></th>
+      <th>Rem. <span class="info-tip" data-tip="Remaining hours of work left. Calculated as LOE minus hours already logged (or marked done) on child tickets.">i</span></th>
+      <th class="th-sort${projSort.col==='progress'?' sorted':''}" onclick="sortProjects('progress')">Progress <span class="info-tip" data-tip="% complete based on hours: (LOE - Remaining) ÷ LOE. Bar color reflects urgency relative to the go-live date.">i</span><span class="sort-icon"><i class="ti ti-${projSort.col==='progress'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th class="th-sort${projSort.col==='devBy'?' sorted':''}" onclick="sortProjects('devBy')">Dev By <span class="info-tip" data-tip="Target date for development to be complete. Set on the initiative in Jira.">i</span><span class="sort-icon"><i class="ti ti-${projSort.col==='devBy'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th class="th-sort${projSort.col==='goLive'?' sorted':''}" onclick="sortProjects('goLive')">Go-Live <span class="info-tip" data-tip="Target date for the initiative to be live in production. Set on the initiative in Jira.">i</span><span class="sort-icon"><i class="ti ti-${projSort.col==='goLive'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
+      <th>Status <span class="info-tip" data-tip="Current Jira workflow status of the initiative (e.g. Open, In Progress, Dev Complete, Done).">i</span></th>
+      <th>Assignee(s) <span class="info-tip" data-tip="People assigned to child tickets within this initiative. Up to 3 shown; +N indicates additional assignees.">i</span></th>
+      <th class="th-sort${projSort.col==='risk'?' sorted':''}" onclick="sortProjects('risk')">Risk <span class="info-tip" data-tip="CRITICAL: behind schedule with low completion.\nAT RISK: pace may miss the go-live date.\nON TRACK: projected to complete on time.\nNO LOE ADDED: no hours estimated yet — risk cannot be assessed.">i</span><span class="sort-icon"><i class="ti ti-${projSort.col==='risk'?(projSort.dir===1?'arrow-up':'arrow-down'):'arrows-sort'}"></i></span></th>
     </tr></thead>
     <tbody id="projBody">`;
 
