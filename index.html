@@ -1622,7 +1622,7 @@ function renderProjectsTab(){
       return computeRisk(p).level === null;
     }).length;
     const deliveryHealth = initiativesWithLOE.length ? Math.round((onTrackOrDone/initiativesWithLOE.length)*100) : 0;
-    const healthColor = deliveryHealth>=80?'var(--success)':deliveryHealth>=50?'var(--warning)':'var(--danger)';
+    const healthColor = deliveryHealth>=99?'var(--success)':deliveryHealth>=75?'var(--warning)':'var(--danger)';
     const completionColor = completionPct>=80?'var(--success)':completionPct>=40?'var(--warning)':'var(--danger)';
     const withLOE = d.filter(p=>p.loe>0);
     const avgProgress = withLOE.length ? Math.round(withLOE.reduce((a,p)=>a+pct(p.loe,p.rem,p.logged||0),0)/withLOE.length) : 0;
