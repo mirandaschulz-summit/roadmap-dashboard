@@ -690,6 +690,8 @@ tbody tr:hover td { background: var(--surface-2); }
 .risk-badge-inline:hover { opacity: 0.8; text-decoration: none; }
 .rbi-red { background: var(--danger-bg); color: var(--danger-text); border: 1px solid rgba(220,38,38,0.2); }
 .rbi-amber { background: var(--warning-bg); color: var(--warning-text); border: 1px solid rgba(217,119,6,0.2); }
+/* Risk column should never clip its badge */
+td:last-child { overflow: visible; }
 
 /* ── Empty state ── */
 .empty-state { text-align: center; padding: 64px 20px; color: var(--text-3); }
@@ -1547,9 +1549,11 @@ function renderProjectsTab(){
   const totRem = Math.round(d.reduce((a,p)=>a+p.rem,0));
   const pctDone = totLOE>0 ? Math.round(((totLOE-totRem)/totLOE)*100) : 0;
   const riskResults = d.map(p=>computeRisk(p));
-  const critCount  = riskResults.filter(r=>r.level==='red').length;
-  const atRiskCount= riskResults.filter(r=>r.level==='amber').length;
-  const onTrackCount = d.length - critCount - atRiskCount;
+  const hasTickets = p => p.children && p.children.length > 0;
+  const critCount  = d.filter((p,i) => hasTickets(p) && riskResults[i].level==='red').length;
+  const atRiskCount= d.filter((p,i) => hasTickets(p) && riskResults[i].level==='amber').length;
+  const noTicketsCount = d.filter(p => !hasTickets(p)).length;
+  const onTrackCount = d.length - critCount - atRiskCount - noTicketsCount;
 
   let html=`<div class="metrics" style="margin-bottom:20px;">
     <div class="metric">
@@ -1583,6 +1587,11 @@ function renderProjectsTab(){
         <span style="display:flex;align-items:center;gap:5px;">
           <span style="font-size:22px;font-weight:700;color:var(--success);line-height:1;">${onTrackCount}</span>
           <span style="font-size:11px;color:var(--success);font-weight:600;">On Track</span>
+        </span>
+        <span style="color:var(--border-mid);font-size:14px;">·</span>
+        <span style="display:flex;align-items:center;gap:5px;">
+          <span style="font-size:22px;font-weight:700;color:var(--text-3);line-height:1;">${noTicketsCount}</span>
+          <span style="font-size:11px;color:var(--text-3);font-weight:600;">No Tickets</span>
         </span>
       </div>
       <div class="metric-sub" style="margin-top:6px;">across all initiatives</div>
@@ -1649,12 +1658,12 @@ function renderProjectsTab(){
       + '</div></div></div>';
   })()}
 
-  <div class="table-wrap"><table style="table-layout:fixed;width:100%;">
+  <div class="table-wrap"><table style="table-layout:fixed;width:100%;min-width:1100px;">
     <colgroup>
       <col style="width:28px;">
       <col style="width:90px;">
-      <col style="width:200px;">
-      <col style="width:80px;">
+      <col style="width:220px;">
+      <col style="width:90px;">
       <col style="width:68px;">
       <col style="width:62px;">
       <col style="width:90px;">
@@ -1662,7 +1671,7 @@ function renderProjectsTab(){
       <col style="width:68px;">
       <col style="width:96px;">
       <col style="width:110px;">
-      <col style="width:76px;">
+      <col style="width:110px;">
     </colgroup>
     <thead><tr>
       <th></th>
