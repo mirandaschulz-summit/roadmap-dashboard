@@ -1625,7 +1625,11 @@ function renderProjectsTab(){
     const healthColor = deliveryHealth>=99?'var(--success)':deliveryHealth>=75?'var(--warning)':'var(--danger)';
     const completionColor = completionPct>=80?'var(--success)':completionPct>=40?'var(--warning)':'var(--danger)';
     const withLOE = d.filter(p=>p.loe>0);
-    const avgProgress = withLOE.length ? Math.round(withLOE.reduce((a,p)=>a+pct(p.loe,p.rem,p.logged||0),0)/withLOE.length) : 0;
+    const inProgressWithLOE = withLOE.filter(p => {
+      const sl = (p.status||'').toLowerCase();
+      return sl.includes('progress') || sl.includes('dev complete');
+    });
+    const avgProgress = inProgressWithLOE.length ? Math.round(inProgressWithLOE.reduce((a,p)=>a+pct(p.loe,p.rem,p.logged||0),0)/inProgressWithLOE.length) : 0;
     const upcoming = d
       .filter(p => p.devBy && p.devBy !== '—')
       .map(p => ({ ...p, ms: new Date(p.devBy).getTime() }))
@@ -1648,9 +1652,9 @@ function renderProjectsTab(){
       + '<div style="font-size:26px;font-weight:800;color:' + healthColor + ';line-height:1;">' + deliveryHealth + '%</div>'
       + '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">on track or done</div></div>'
       + '<div style="text-align:center;padding:10px 8px;background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);">'
-      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Avg Progress</div>'
+      + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Avg Progress (In Progress)</div>'
       + '<div style="font-size:26px;font-weight:800;color:var(--text);line-height:1;">' + avgProgress + '%</div>'
-      + '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">hrs logged / estimated</div></div>'
+      + '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">avg across ' + inProgressWithLOE.length + ' in-progress initiatives</div></div>'
       + '<div style="text-align:center;padding:10px 8px;background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);">'
       + '<div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Next Deadline</div>'
       + (upcoming
