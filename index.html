@@ -1591,14 +1591,17 @@ function renderProjectsTab(){
 
   <!-- ── Strategic Initiative Completion ─────────────────────────────────── -->
   ${(()=>{
-    const total = d.length;
+    if(!d.length) return '';
+    // Count all child tickets across all initiatives
+    const allTickets = d.flatMap(p => p.children || []);
+    const total = allTickets.length;
     if(!total) return '';
-    const done = d.filter(p => {
-      const sl = (p.status||'').toLowerCase();
+    const done = allTickets.filter(t => {
+      const sl = (t.status||'').toLowerCase();
       return sl.includes('done') || sl.includes('complete') || sl.includes('closed') || sl.includes('verified') || sl.includes('on prod') || sl.includes('resolved');
     }).length;
-    const inProg = d.filter(p => {
-      const sl=(p.status||'').toLowerCase();
+    const inProg = allTickets.filter(t => {
+      const sl=(t.status||'').toLowerCase();
       return sl.includes('progress') || sl.includes('dev complete');
     }).length;
     const notStarted = total - done - inProg;
@@ -1608,7 +1611,7 @@ function renderProjectsTab(){
       if(sl.includes('done')||sl.includes('complete')||sl.includes('closed')||sl.includes('verified')||sl.includes('on prod')||sl.includes('resolved')) return true;
       return computeRisk(p).level === null;
     }).length;
-    const deliveryHealth = Math.round((onTrackOrDone/total)*100);
+    const deliveryHealth = Math.round((onTrackOrDone/d.length)*100);
     const healthColor = deliveryHealth>=80?'var(--success)':deliveryHealth>=50?'var(--warning)':'var(--danger)';
     const completionColor = completionPct>=80?'var(--success)':completionPct>=40?'var(--warning)':'var(--danger)';
     const withLOE = d.filter(p=>p.loe>0);
@@ -1621,7 +1624,7 @@ function renderProjectsTab(){
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:18px 24px;margin-bottom:20px;box-shadow:var(--shadow-sm);">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">'
       + '<div style="font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;"><i class="ti ti-target" style="color:var(--primary);font-size:16px;"></i>Strategic Initiative Completion</div>'
-      + '<span style="font-size:11px;color:var(--text-3);">' + total + ' initiatives tracked</span></div>'
+      + '<span style="font-size:11px;color:var(--text-3);">' + total + ' tickets tracked</span></div>'
       + '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:16px;align-items:center;">'
       + '<div><div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Overall Completion</div>'
       + '<div style="display:flex;align-items:center;gap:10px;"><div style="flex:1;height:10px;background:var(--border);border-radius:10px;overflow:hidden;max-width:220px;"><div style="height:100%;border-radius:10px;background:' + completionColor + ';width:' + completionPct + '%;transition:width .5s ease;"></div></div>'
