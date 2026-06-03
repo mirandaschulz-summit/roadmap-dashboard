@@ -1549,7 +1549,7 @@ function renderProjectsTab(){
   const totRem = Math.round(d.reduce((a,p)=>a+p.rem,0));
   const pctDone = totLOE>0 ? Math.round(((totLOE-totRem)/totLOE)*100) : 0;
   const riskResults = d.map(p=>computeRisk(p));
-  const hasTickets = p => p.children && p.children.length > 0;
+  const hasTickets = p => p.children && p.children.length > 0 && p.loe > 0;
   const critCount  = d.filter((p,i) => hasTickets(p) && riskResults[i].level==='red').length;
   const atRiskCount= d.filter((p,i) => hasTickets(p) && riskResults[i].level==='amber').length;
   const noTicketsCount = d.filter(p => !hasTickets(p)).length;
@@ -1591,7 +1591,7 @@ function renderProjectsTab(){
         <span style="color:var(--border-mid);font-size:14px;">·</span>
         <span style="display:flex;align-items:center;gap:5px;">
           <span style="font-size:22px;font-weight:700;color:var(--text-3);line-height:1;">${noTicketsCount}</span>
-          <span style="font-size:11px;color:var(--text-3);font-weight:600;">No Tickets</span>
+          <span style="font-size:11px;color:var(--text-3);font-weight:600;">No LOE</span>
         </span>
       </div>
       <div class="metric-sub" style="margin-top:6px;">across all initiatives</div>
@@ -1756,7 +1756,7 @@ function renderProjectsTab(){
         : gRiskInfos.some(r=>r.level==='amber') ? 'amber' : null;
       const gHasTickets = members.some(m => m.children && m.children.length > 0);
       const gRiskCell = !gHasTickets
-        ? `<td><span class="risk-badge-inline" style="background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);"><i class="ti ti-clock" style="font-size:10px;"></i>NO TICKETS YET</span></td>`
+        ? `<td><span class="risk-badge-inline" style="background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);"><i class="ti ti-clock" style="font-size:10px;"></i>NO LOE ADDED</span></td>`
         : gRiskLevel
         ? `<td style="white-space:nowrap;">
              <a class="risk-badge-inline rbi-${gRiskLevel}" onclick="goToRisk('${members[0]?.key}','${gRiskLevel}')" href="javascript:void(0)">
@@ -1915,7 +1915,7 @@ function renderProjectsTab(){
     const assigneeStr = p.assignees.slice(0,3).join(', ')+(p.assignees.length>3?' +'+(p.assignees.length-3):'');
     const riskInfo = computeRisk(p);
     const riskCell = !hasChildren
-      ? `<td><span class="risk-badge-inline" style="background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);"><i class="ti ti-clock" style="font-size:10px;"></i>NO TICKETS YET</span></td>`
+      ? `<td><span class="risk-badge-inline" style="background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);"><i class="ti ti-clock" style="font-size:10px;"></i>NO LOE ADDED</span></td>`
       : riskInfo.level
       ? `<td style="white-space:nowrap;">
            <a class="risk-badge-inline rbi-${riskInfo.level}" onclick="goToRisk('${p.key}','${riskInfo.level}')" href="javascript:void(0)">
