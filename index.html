@@ -1739,7 +1739,10 @@ function renderProjectsTab(){
       const gRiskInfos = members.map(m=>computeRisk(m));
       const gRiskLevel = gRiskInfos.some(r=>r.level==='red') ? 'red'
         : gRiskInfos.some(r=>r.level==='amber') ? 'amber' : null;
-      const gRiskCell = gRiskLevel
+      const gHasTickets = members.some(m => m.children && m.children.length > 0);
+      const gRiskCell = !gHasTickets
+        ? `<td><span class="risk-badge-inline" style="background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);"><i class="ti ti-clock" style="font-size:10px;"></i>NO TICKETS YET</span></td>`
+        : gRiskLevel
         ? `<td style="white-space:nowrap;">
              <a class="risk-badge-inline rbi-${gRiskLevel}" onclick="goToRisk('${members[0]?.key}','${gRiskLevel}')" href="javascript:void(0)">
                <i class="ti ti-alert-triangle" style="font-size:10px;"></i>${gRiskLevel==='red'?'CRITICAL':'AT RISK'}
@@ -1896,7 +1899,9 @@ function renderProjectsTab(){
     const hasChildren = epics.length > 0 || allTickets.length > 0;
     const assigneeStr = p.assignees.slice(0,3).join(', ')+(p.assignees.length>3?' +'+(p.assignees.length-3):'');
     const riskInfo = computeRisk(p);
-    const riskCell = riskInfo.level
+    const riskCell = !hasChildren
+      ? `<td><span class="risk-badge-inline" style="background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);"><i class="ti ti-clock" style="font-size:10px;"></i>NO TICKETS YET</span></td>`
+      : riskInfo.level
       ? `<td style="white-space:nowrap;">
            <a class="risk-badge-inline rbi-${riskInfo.level}" onclick="goToRisk('${p.key}','${riskInfo.level}')" href="javascript:void(0)">
              <i class="ti ti-alert-triangle" style="font-size:10px;"></i>${riskInfo.level==='red'?'CRITICAL':'AT RISK'}
