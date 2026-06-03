@@ -1615,12 +1615,13 @@ function renderProjectsTab(){
     }).length;
     const notStarted = total - done - inProg;
     const completionPct = Math.round((done/total)*100);
-    const onTrackOrDone = d.filter(p => {
+    const initiativesWithLOE = d.filter(p => hasTickets(p));
+    const onTrackOrDone = initiativesWithLOE.filter(p => {
       const sl=(p.status||'').toLowerCase();
       if(sl.includes('done')||sl.includes('complete')||sl.includes('closed')||sl.includes('verified')||sl.includes('on prod')||sl.includes('resolved')) return true;
       return computeRisk(p).level === null;
     }).length;
-    const deliveryHealth = Math.round((onTrackOrDone/d.length)*100);
+    const deliveryHealth = initiativesWithLOE.length ? Math.round((onTrackOrDone/initiativesWithLOE.length)*100) : 0;
     const healthColor = deliveryHealth>=80?'var(--success)':deliveryHealth>=50?'var(--warning)':'var(--danger)';
     const completionColor = completionPct>=80?'var(--success)':completionPct>=40?'var(--warning)':'var(--danger)';
     const withLOE = d.filter(p=>p.loe>0);
