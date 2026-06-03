@@ -2689,6 +2689,10 @@ function computeRisk(p) {
   const isDone = (p.status||'').toLowerCase().includes('done');
   if(isDone) return { level:null, reasons:[], pct:100, latestStart:null, daysLeft:null };
 
+  // No LOE or no children — can't assess risk
+  const hasLOE = p.loe > 0 && p.children && p.children.length > 0;
+  if(!hasLOE) return { level:null, reasons:[], pct:0, latestStart:null, daysLeft:null };
+
   const now = new Date(); now.setHours(0,0,0,0);
   const reasons = [];
   let topLevel = null;
