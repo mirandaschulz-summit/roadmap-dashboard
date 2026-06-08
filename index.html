@@ -2779,18 +2779,20 @@ function computeRisk(p) {
   // Each assignee contributes min(their_rem_on_epic, 6) hrs/day — someone
   // with only 4 hrs of tickets realistically isn't burning 6 hrs/day on this epic
   const dailyCapacity = Math.max(1, Object.values(assigneeRem).reduce((sum, rem) => {
-    return sum + Math.min(rem > 0 ? HRS_PER_DEV_DAY : 0, HRS_PER_DEV_DAY);
+    return sum + Math.min(rem > 0 ? HRS_PER_DEV_DAY : 0, HRS_PER_DEV_DAY); // negative rem = 0 contribution
   }, 0));
   // But also floor each contributor's realistic daily rate by their total LOE share:
   // if someone only has 8 hrs on the epic, they're done in ~1-2 days, not contributing
   // a full 6 hrs/day for the entire duration. Use effective FTEs instead.
-  const totalAssigneeRem = Object.values(assigneeRem).reduce((a, v) => a + v, 0);
-  const effectiveDailyCapacity = Math.max(1, Object.entries(assigneeRem).reduce((sum, [, rem]) => {
+  // Clamp per-assignee remaining to 0 for capacity math — negative just means they over-ran, not that they have negative capacity
+  const assigneeRemClamped = Object.fromEntries(Object.entries(assigneeRem).map(([k,v])=>[k,Math.max(0,v)]));
+  const totalAssigneeRem = Object.values(assigneeRemClamped).reduce((a, v) => a + v, 0);
+  const effectiveDailyCapacity = Math.max(1, Object.entries(assigneeRemClamped).reduce((sum, [, rem]) => {
     if(rem <= 0) return sum;
     // Their share of total work × 6 hrs/day, capped at 6
     const share = totalAssigneeRem > 0 ? rem / totalAssigneeRem : 1;
     // Weight: a 200hr person on a 212hr epic = ~6 hrs/day; 8hr person = ~0.23 hrs/day
-    return sum + Math.min(share * HRS_PER_DEV_DAY * Object.keys(assigneeRem).length, HRS_PER_DEV_DAY);
+    return sum + Math.min(share * HRS_PER_DEV_DAY * Object.keys(assigneeRemClamped).length, HRS_PER_DEV_DAY);
   }, 0));
   const devCount = Object.keys(assigneeRem).length || 1;
 
@@ -2801,7 +2803,7 @@ function computeRisk(p) {
 
     if(p.loe > 0) {
       // How many calendar days does this work actually require at team capacity?
-      const daysNeeded = Math.ceil(p.rem / effectiveDailyCapacity);
+      const daysNeeded = Math.ceil(Math.max(0, p.rem) / effectiveDailyCapacity);
       // Latest date work should begin (with buffer)
       latestStart = new Date(devDate);
       latestStart.setDate(latestStart.getDate() - daysNeeded - START_BUFFER_DAYS);
