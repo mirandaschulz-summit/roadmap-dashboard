@@ -1778,6 +1778,7 @@ function renderProjectsTab(){
       const { group, members, gi } = item;
       const gLOE = Math.round(members.reduce((a,m)=>a+m.loe,0)*10)/10;
       const gRem = Math.round(members.reduce((a,m)=>a+m.rem,0)*10)/10;
+      const gPct = members.length ? Math.round(members.reduce((a,m)=>a+pct(m.loe,m.rem,m.logged||0),0)/members.length) : 0;
       const gAssignees = [...new Set(members.flatMap(m=>m.assignees))];
       const gAssigneeStr = gAssignees.slice(0,3).join(', ')+(gAssignees.length>3?' +'+(gAssignees.length-3):'');
       const gDevBy = members.map(m=>m.devBy).filter(d=>d&&d!=='—').sort()[0] || '—';
@@ -1811,7 +1812,7 @@ function renderProjectsTab(){
         <td><span class="badge b-purple" style="background:#EEF2FD;color:#1C51E1;">Group</span></td>
         <td style="font-weight:600;">${gLOE||'—'}</td>
         <td style="font-weight:600;color:${gRem>0?'var(--text)':'var(--text-3)'}">${gRem||'0'}</td>
-        <td>${progressCell(gLOE,gRem)}</td>
+        <td>${gLOE>0 ? `<div style="display:flex;align-items:center;gap:5px;"><div class="progress-bar" style="min-width:44px;max-width:60px;flex:1;"><div class="progress-fill" style="width:${Math.min(100,gPct)}%;background:${barColor(gPct)};"></div></div><span style="font-size:11px;min-width:26px;">${fmtPct(gPct)}</span></div>` : '—'}</td>
         <td style="white-space:nowrap;font-size:12px;">${shortDate(gDevBy)}</td>
         <td style="white-space:nowrap;font-size:12px;">${shortDate(gGoLive)||'—'}</td>
         <td>${statusBadge(gStatus)}</td>
