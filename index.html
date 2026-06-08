@@ -1327,7 +1327,7 @@ async function fetchWorklogs(key) {
   } catch(e) { return []; }
 }
 
-const CHILD_FIELDS = ['summary','status','assignee','story_points','customfield_10016','customfield_10014','customfield_10015','customfield_10028','duedate','priority','issuetype','timeoriginalestimate','timeestimate','timespent','parent'];
+const CHILD_FIELDS = ['summary','status','resolution','assignee','story_points','customfield_10016','customfield_10014','customfield_10015','customfield_10028','duedate','priority','issuetype','timeoriginalestimate','timeestimate','timespent','parent'];
 
 async function searchIssues(jql, extra=[]) {
   const fields = [...new Set([...CHILD_FIELDS, ...extra, S.fields.loe, S.fields.devBy, S.fields.release].filter(Boolean))].join(',');
@@ -1452,18 +1452,22 @@ async function syncJira() {
       const mappedChildren = children.map(c=>{
           const orig = parseFloat(c.fields.timeoriginalestimate||0);
           const statusName = (c.fields.status?.name||'').toLowerCase();
-          const isDone = statusName.includes('done') || statusName.includes('closed') || statusName.includes('resolved') || statusName.includes('verified') || statusName.includes('on prod') || statusName.includes('dev complete');
-          const jiraRem = isDone ? 0 : parseFloat(c.fields.timeestimate||c.fields.timeoriginalestimate||0);
+          const resolutionName = (c.fields.resolution?.name||'').toLowerCase();
+          // Done = fully complete statuses or resolved resolution. Dev complete is still in-progress.
+          const isDone = statusName === 'done' || statusName.includes('closed') ||
+                         statusName.includes('verified') || statusName.includes('on prod') ||
+                         resolutionName === 'resolved' || resolutionName === 'done';
           const worklogs = worklogMap[c.key] || [];
           // Use actual worklog sum if available, otherwise fall back to estimate math
           const workloggedSecs = worklogs.reduce((a,w) => a + (w.timeSpentSeconds||0), 0);
+          const jiraRem = parseFloat(c.fields.timeestimate||c.fields.timeoriginalestimate||0);
           const loggedSecs = workloggedSecs > 0
             ? workloggedSecs
             : (isDone ? orig : Math.max(0, orig - jiraRem));
           const loggedHrs = Math.round(loggedSecs / 3600 * 10) / 10;
-          const loeHrs = orig > 0 ? Math.round(orig/3600) : Math.round(getLOE(c.fields)||0);
-          // Remaining = max(0, LOE - logged) so logged+rem never exceeds LOE
-          const remainingHrs = isDone ? 0 : Math.max(0, Math.round((loeHrs - loggedHrs) * 10) / 10);
+          const loeHrs = orig > 0 ? Math.round(orig/3600*10)/10 : Math.round((getLOE(c.fields)||0)*10)/10;
+          // If done: remaining = 0. Otherwise: allow negative to surface over-LOE'd tickets.
+          const remainingHrs = isDone ? 0 : Math.round((loeHrs - loggedHrs) * 10) / 10;
           return {
             key:c.key, summary:c.fields.summary,
             type: c.fields.issuetype?.name||'',
@@ -1472,6 +1476,7 @@ async function syncJira() {
             parentKey: c.fields.parent?.key||null,
             assignee:c.fields.assignee?.displayName||'—',
             loe: loeHrs,
+            originalEst: loeHrs,
             remaining: remainingHrs,
             logged: loggedHrs,
             dueDate:parseDate(getF(c.fields,S.fields.devBy)||c.fields.duedate)||'—',
@@ -1499,15 +1504,17 @@ async function syncJira() {
   btn.innerHTML='<i class="ti ti-refresh"></i> Sync'; btn.disabled=false;
 }
 
-function pct(loe,rem,logged){ 
-  if(rem<=0) return 100;
-  // Use logged/(logged+rem) to match Jira's time-tracking progress (same as Jira UI)
-  if(logged>0) return Math.min(100, Math.round((logged/(logged+rem))*100));
-  // Fallback to estimate-based if no logged hours
+function pct(loe,rem,logged){
+  // rem can be negative (over-LOE'd); done tickets have rem=0
   if(loe<=0) return 0;
-  return Math.min(100, Math.round(((loe-rem)/loe)*100));
+  if(rem<=0 && logged<=0) return 100; // done with no logged time
+  // logged / (logged + max(0,rem)) — if rem is negative, logged already exceeded LOE
+  const effectiveTotal = logged + Math.max(0, rem);
+  if(effectiveTotal <= 0) return 0;
+  return Math.round((logged / effectiveTotal) * 100); // can exceed 100 when over-LOE'd
 }
-function barColor(p){ return p>=80?'#1D9E75':p>=40?'#378ADD':'#E24B4A'; }
+function barColor(p){ return p>100?'#E24B4A':p>=80?'#1D9E75':p>=40?'#378ADD':'#E24B4A'; }
+function fmtPct(p){ return p>100 ? `<span style="color:#E24B4A;font-weight:700;">${p}%</span>` : `${p}%`; }
 function statusBadge(s){
   const l=(s||'').toLowerCase();
   const label = s||'—';
@@ -1535,8 +1542,9 @@ function statusBadge(s){
 }
 function progressCell(loe,rem,logged){
   const p=pct(loe,rem,logged||0);
+  const barW=Math.min(100,p);
   return loe>0
-    ? `<div style="display:flex;align-items:center;gap:5px;"><div class="progress-bar" style="min-width:44px;max-width:60px;flex:1;"><div class="progress-fill" style="width:${p}%;background:${barColor(p)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:26px;">${p}%</span></div>`
+    ? `<div style="display:flex;align-items:center;gap:5px;"><div class="progress-bar" style="min-width:44px;max-width:60px;flex:1;"><div class="progress-fill" style="width:${barW}%;background:${barColor(p)};"></div></div><span style="font-size:11px;min-width:26px;">${fmtPct(p)}</span></div>`
     : '—';
 }
 
@@ -1849,12 +1857,12 @@ function renderProjectsTab(){
         epics.forEach((ep,ei)=>{
           const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
           const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
-          const ticketLogged = epicTickets.reduce((a,t)=>a+(t.isDone ? t.loe : (t.logged||0)),0);
+          const ticketLogged = epicTickets.reduce((a,t)=>a+(t.logged||0),0);
           const epicLOE = ticketLOE > 0 ? ticketLOE : ep.loe;
           const epicLogged = ticketLOE > 0 ? ticketLogged : (ep.logged||0);
           const epPct = epicLOE>0 ? Math.min(100,Math.round(epicLogged/epicLOE*100)) : 0;
-          const epicRem = epicLOE > 0 ? Math.max(0, Math.round((epicLOE - epicLogged)*10)/10) : 0;
-          const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epPct}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${epPct}%</span></div>` : '—';
+          const epicRem = epicLOE > 0 ? Math.round((epicLOE - epicLogged)*10)/10 : 0;
+          const epBarW=Math.min(100,epPct); const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epBarW}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(epPct)}</span></div>` : '—';
           html+=`<tr class="accordion-row level-epic" data-group="${memberId}" data-s="${esc(ep.summary).toLowerCase()}" data-st="${(ep.status||'').toLowerCase()}" style="display:none;">
             <td colspan="2" style="padding-left:56px;">
               <div style="display:flex;align-items:center;gap:4px;">
@@ -1875,12 +1883,12 @@ function renderProjectsTab(){
             <td></td>
           </tr>`;
           epicTickets.forEach(t=>{
-            const tPct = t.isDone ? 100 : (t.loe>0 ? Math.min(100,Math.round((t.logged||0)/t.loe*100)) : 0);
+            const tPct = t.isDone ? 100 : pct(t.loe, t.remaining, t.logged||0);
             const isBug = (t.type||'').toLowerCase().includes('bug');
             const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
             const fileIcon = isBug ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>` : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
-            const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
-            const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
+            const tRem = t.isDone ? 0 : Math.round((t.loe - (t.logged||0))*10)/10;
+            const tBarW=Math.min(100,tPct); const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tBarW}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(tPct)}</span></div>` : '—';
             html+=`<tr class="accordion-row level-ticket" data-group="gep-${gi}-${pi}-${ep.key}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
               <td colspan="2" style="padding-left:84px;">
                 <div style="display:flex;align-items:center;gap:5px;">
@@ -1892,7 +1900,7 @@ function renderProjectsTab(){
               <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
               <td>${typeBadge}</td>
               <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
-              <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
+              <td style="font-size:12px;color:${tRem<0?'#E24B4A':tRem>0?'var(--text)':'var(--text-3)'}">${tRem<0?tRem+'h over':''+( tRem||'0')}</td>
               <td>${tBar}</td>
               <td style="font-size:12px;color:var(--text-3);">—</td>
               <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -1905,12 +1913,12 @@ function renderProjectsTab(){
 
         const orphans = allTickets.filter(t=>!t.parentKey||!epics.find(e=>e.key===t.parentKey));
         orphans.forEach(t=>{
-          const tPct = t.isDone ? 100 : (t.loe>0 ? Math.min(100,Math.round((t.logged||0)/t.loe*100)) : 0);
+          const tPct = t.isDone ? 100 : pct(t.loe, t.remaining, t.logged||0);
           const isBug = (t.type||'').toLowerCase().includes('bug');
           const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
           const fileIcon = isBug ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>` : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
-          const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
-          const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
+          const tRem = t.isDone ? 0 : Math.round((t.loe - (t.logged||0))*10)/10;
+          const tBarW=Math.min(100,tPct); const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tBarW}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(tPct)}</span></div>` : '—';
           html+=`<tr class="accordion-row level-ticket" data-group="${memberId}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
             <td colspan="2" style="padding-left:56px;">
               <div style="display:flex;align-items:center;gap:5px;">
@@ -1922,7 +1930,7 @@ function renderProjectsTab(){
             <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
             <td>${typeBadge}</td>
             <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
-            <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
+            <td style="font-size:12px;color:${tRem<0?'#E24B4A':tRem>0?'var(--text)':'var(--text-3)'}">${tRem<0?tRem+'h over':''+( tRem||'0')}</td>
             <td>${tBar}</td>
             <td style="font-size:12px;color:var(--text-3);">—</td>
             <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -1977,12 +1985,12 @@ function renderProjectsTab(){
     epics.forEach((ep,ei)=>{
       const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
       const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
-      const ticketLogged = epicTickets.reduce((a,t)=>a+(t.isDone ? t.loe : (t.logged||0)),0);
+      const ticketLogged = epicTickets.reduce((a,t)=>a+(t.logged||0),0);
       const epicLOE = ticketLOE > 0 ? ticketLOE : ep.loe;
       const epicLogged = ticketLOE > 0 ? ticketLogged : (ep.logged||0);
       const epPct = epicLOE>0 ? Math.min(100,Math.round(epicLogged/epicLOE*100)) : 0;
-      const epicRem = epicLOE > 0 ? Math.max(0, Math.round((epicLOE - epicLogged)*10)/10) : 0;
-      const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epPct}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${epPct}%</span></div>` : '—';
+      const epicRem = epicLOE > 0 ? Math.round((epicLOE - epicLogged)*10)/10 : 0;
+      const epBarW=Math.min(100,epPct); const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epBarW}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(epPct)}</span></div>` : '—';
 
       html+=`<tr class="accordion-row level-epic" data-group="init-${pi}" data-s="${esc(ep.summary).toLowerCase()}" data-st="${(ep.status||'').toLowerCase()}" style="display:none;">
         <td colspan="2" style="padding-left:32px;">
@@ -2005,14 +2013,14 @@ function renderProjectsTab(){
       </tr>`;
 
       epicTickets.forEach(t=>{
-        const tPct = t.isDone ? 100 : (t.loe>0 ? Math.min(100,Math.round((t.logged||0)/t.loe*100)) : 0);
+        const tPct = t.isDone ? 100 : pct(t.loe, t.remaining, t.logged||0);
         const isBug = (t.type||'').toLowerCase().includes('bug');
         const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
         const fileIcon = isBug
           ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>`
           : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
-        const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
-      const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
+        const tRem = t.isDone ? 0 : Math.round((t.loe - (t.logged||0))*10)/10;
+      const tBarW=Math.min(100,tPct); const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tBarW}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(tPct)}</span></div>` : '—';
         html+=`<tr class="accordion-row level-ticket" data-group="epic-${pi}-${ep.key}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
           <td colspan="2" style="padding-left:60px;">
             <div style="display:flex;align-items:center;gap:5px;">
@@ -2024,7 +2032,7 @@ function renderProjectsTab(){
           <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
           <td>${typeBadge}</td>
           <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
-          <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
+          <td style="font-size:12px;color:${tRem<0?'#E24B4A':tRem>0?'var(--text)':'var(--text-3)'}">${tRem<0?tRem+'h over':''+( tRem||'0')}</td>
           <td>${tBar}</td>
           <td style="font-size:12px;color:var(--text-3);">—</td>
           <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -2038,14 +2046,14 @@ function renderProjectsTab(){
     // Orphan tickets not under any epic
     const orphans = allTickets.filter(t=>!t.parentKey||!epics.find(e=>e.key===t.parentKey));
     orphans.forEach(t=>{
-      const tPct = t.isDone ? 100 : (t.loe>0 ? Math.min(100,Math.round((t.logged||0)/t.loe*100)) : 0);
+      const tPct = t.isDone ? 100 : pct(t.loe, t.remaining, t.logged||0);
       const isBug = (t.type||'').toLowerCase().includes('bug');
       const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
       const fileIcon = isBug
         ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>`
         : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
-      const tRem = t.isDone ? 0 : Math.max(0, Math.round((t.loe - (t.logged||0))*10)/10);
-      const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tPct}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:28px;">${tPct}%</span></div>` : '—';
+      const tRem = t.isDone ? 0 : Math.round((t.loe - (t.logged||0))*10)/10;
+      const tBarW=Math.min(100,tPct); const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tBarW}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(tPct)}</span></div>` : '—';
       html+=`<tr class="accordion-row level-ticket" data-group="init-${pi}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
         <td colspan="2" style="padding-left:32px;">
           <div style="display:flex;align-items:center;gap:5px;">
@@ -2057,7 +2065,7 @@ function renderProjectsTab(){
         <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
         <td>${typeBadge}</td>
         <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
-        <td style="font-size:12px;color:${tRem>0?'var(--text)':'var(--text-3)'}">${tRem||'0'}</td>
+        <td style="font-size:12px;color:${tRem<0?'#E24B4A':tRem>0?'var(--text)':'var(--text-3)'}">${tRem<0?tRem+'h over':''+( tRem||'0')}</td>
         <td>${tBar}</td>
         <td style="font-size:12px;color:var(--text-3);">—</td>
         <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -2203,12 +2211,12 @@ function renderHaltedTab(){
     epics.forEach((ep,ei) => {
       const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
       const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
-      const ticketLogged = epicTickets.reduce((a,t)=>a+(t.isDone ? t.loe : (t.logged||0)),0);
+      const ticketLogged = epicTickets.reduce((a,t)=>a+(t.logged||0),0);
       const epicLOE = ticketLOE > 0 ? ticketLOE : ep.loe;
       const epicLogged = ticketLOE > 0 ? ticketLogged : (ep.logged||0);
       const epPct = epicLOE>0 ? Math.min(100,Math.round(epicLogged/epicLOE*100)) : 0;
-      const epicRem = epicLOE > 0 ? Math.max(0, Math.round((epicLOE - epicLogged)*10)/10) : 0;
-      const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:40px;"><div class="progress-fill" style="width:${epPct}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;color:var(--text-3);min-width:26px;">${epPct}%</span></div>` : '—';
+      const epicRem = epicLOE > 0 ? Math.round((epicLOE - epicLogged)*10)/10 : 0;
+      const epBarW=Math.min(100,epPct); const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:40px;"><div class="progress-fill" style="width:${epBarW}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;min-width:26px;">${fmtPct(epPct)}</span></div>` : '—';
       const epicGroupId = `halted-epic-${pi}-${ep.key}`;
 
       html+=`<tr class="accordion-row level-epic" data-group="${groupId}" style="display:none;">
