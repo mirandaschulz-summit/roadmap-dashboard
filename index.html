@@ -1884,10 +1884,12 @@ function renderProjectsTab(){
           const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
           const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
           const ticketLogged = epicTickets.reduce((a,t)=>a+(t.logged||0),0);
-          const ticketRem = epicTickets.reduce((a,t)=>a+(t.remaining||0),0); // sum per-ticket remaining (can be negative)
+          const ticketRem = epicTickets.reduce((a,t)=>a+(t.remaining||0),0);
+          const ticketSaved = epicTickets.reduce((a,t)=>a+(t.saved||0),0);
           const epicLOE = ticketLOE > 0 ? ticketLOE : ep.loe;
           const epicLogged = ticketLOE > 0 ? ticketLogged : (ep.logged||0);
           const epicRem = ticketLOE > 0 ? Math.round(ticketRem*10)/10 : Math.round((ep.rem||0)*10)/10;
+          const epicSaved = Math.round(ticketSaved*10)/10;
           const epPct = epicLOE>0 ? Math.round(epicLogged/(epicLogged+Math.max(0,epicRem))*100) : 0;
           const epBarW=Math.min(100,epPct); const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epBarW}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(epPct)}</span></div>` : '—';
           html+=`<tr class="accordion-row level-epic" data-group="${memberId}" data-s="${esc(ep.summary).toLowerCase()}" data-st="${(ep.status||'').toLowerCase()}" style="display:none;">
@@ -1901,7 +1903,7 @@ function renderProjectsTab(){
             <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(ep.summary)}">${esc(ep.summary)}</td>
             <td><span class="badge b-amber">Epic</span></td>
             <td style="font-size:12px;">${epicLOE||'—'}</td>
-            <td style="font-size:12px;color:${epicRem<0?'#E24B4A':epicRem>0?'var(--text)':'var(--text-3)'};font-weight:${epicRem<0?'600':'400'}">${epicRem<0?(Math.abs(epicRem)+'h over'):(epicRem||'0')}</td>
+            <td style="font-size:12px;color:${epicRem<0?'#E24B4A':epicSaved>0?'#1D9E75':epicRem>0?'var(--text)':'var(--text-3)'};font-weight:${epicRem<0||epicSaved>0?'600':'400'}">${epicRem<0?(Math.abs(epicRem)+'h over'):epicSaved>0?('+'+epicSaved+'h saved'):(epicRem||'0')}</td>
             <td>${epBar}</td>
             <td style="font-size:12px;color:var(--text-3);">—</td>
             <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -2014,9 +2016,11 @@ function renderProjectsTab(){
       const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
       const ticketLogged = epicTickets.reduce((a,t)=>a+(t.logged||0),0);
       const ticketRem = epicTickets.reduce((a,t)=>a+(t.remaining||0),0);
+      const ticketSaved = epicTickets.reduce((a,t)=>a+(t.saved||0),0);
       const epicLOE = ticketLOE > 0 ? ticketLOE : ep.loe;
       const epicLogged = ticketLOE > 0 ? ticketLogged : (ep.logged||0);
       const epicRem = ticketLOE > 0 ? Math.round(ticketRem*10)/10 : Math.round((ep.rem||0)*10)/10;
+      const epicSaved = Math.round(ticketSaved*10)/10;
       const epPct = epicLOE>0 ? Math.round(epicLogged/(epicLogged+Math.max(0,epicRem))*100) : 0;
       const epBarW=Math.min(100,epPct); const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${epBarW}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(epPct)}</span></div>` : '—';
 
@@ -2031,7 +2035,7 @@ function renderProjectsTab(){
         <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(ep.summary)}">${esc(ep.summary)}</td>
         <td><span class="badge b-amber">Epic</span></td>
         <td style="font-size:12px;">${epicLOE||'—'}</td>
-        <td style="font-size:12px;color:${epicRem<0?'#E24B4A':epicRem>0?'var(--text)':'var(--text-3)'};font-weight:${epicRem<0?'600':'400'}">${epicRem<0?(Math.abs(epicRem)+'h over'):(epicRem||'0')}</td>
+        <td style="font-size:12px;color:${epicRem<0?'#E24B4A':epicSaved>0?'#1D9E75':epicRem>0?'var(--text)':'var(--text-3)'};font-weight:${epicRem<0||epicSaved>0?'600':'400'}">${epicRem<0?(Math.abs(epicRem)+'h over'):epicSaved>0?('+'+epicSaved+'h saved'):(epicRem||'0')}</td>
         <td>${epBar}</td>
         <td style="font-size:12px;color:var(--text-3);">—</td>
         <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -2241,9 +2245,11 @@ function renderHaltedTab(){
       const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
       const ticketLogged = epicTickets.reduce((a,t)=>a+(t.logged||0),0);
       const ticketRem = epicTickets.reduce((a,t)=>a+(t.remaining||0),0);
+      const ticketSaved = epicTickets.reduce((a,t)=>a+(t.saved||0),0);
       const epicLOE = ticketLOE > 0 ? ticketLOE : ep.loe;
       const epicLogged = ticketLOE > 0 ? ticketLogged : (ep.logged||0);
       const epicRem = ticketLOE > 0 ? Math.round(ticketRem*10)/10 : Math.round((ep.rem||0)*10)/10;
+      const epicSaved = Math.round(ticketSaved*10)/10;
       const epPct = epicLOE>0 ? Math.round(epicLogged/(epicLogged+Math.max(0,epicRem))*100) : 0;
       const epBarW=Math.min(100,epPct); const epBar = epicLOE>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:40px;"><div class="progress-fill" style="width:${epBarW}%;background:${barColor(epPct)};"></div></div><span style="font-size:11px;min-width:26px;">${fmtPct(epPct)}</span></div>` : '—';
       const epicGroupId = `halted-epic-${pi}-${ep.key}`;
@@ -2259,7 +2265,7 @@ function renderHaltedTab(){
         <td style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(ep.summary)}">${esc(ep.summary)}</td>
         <td><span class="badge b-amber">Epic</span></td>
         <td style="font-size:12px;">${epicLOE||'—'}</td>
-        <td style="font-size:12px;color:${epicRem<0?'#E24B4A':epicRem>0?'var(--text)':'var(--text-3)'};font-weight:${epicRem<0?'600':'400'}">${epicRem<0?(Math.abs(epicRem)+'h over'):(epicRem||'0')}</td>
+        <td style="font-size:12px;color:${epicRem<0?'#E24B4A':epicSaved>0?'#1D9E75':epicRem>0?'var(--text)':'var(--text-3)'};font-weight:${epicRem<0||epicSaved>0?'600':'400'}">${epicRem<0?(Math.abs(epicRem)+'h over'):epicSaved>0?('+'+epicSaved+'h saved'):(epicRem||'0')}</td>
         <td>${epBar}</td>
         <td style="font-size:12px;color:var(--text-3);">—</td>
         <td style="font-size:12px;color:var(--text-3);">—</td>
