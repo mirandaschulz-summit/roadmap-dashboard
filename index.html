@@ -2793,24 +2793,13 @@ function computeRisk(p) {
       const remHrs = Math.max(0, p.rem);
       // How many working days does the remaining work require at baseline pace?
       const daysNeeded = Math.ceil(remHrs / HRS_PER_DEV_DAY);
-      // Latest date work should have started (with buffer)
-      latestStart = new Date(devDate);
-      latestStart.setDate(latestStart.getDate() - daysNeeded - START_BUFFER_DAYS);
-
-      const workShouldHaveStarted = now >= latestStart;
-      const daysUntilLatestStart = Math.ceil((latestStart - now) / 86400000);
 
       if(daysLeft < 0) {
         // Deadline already passed with work remaining
         reasons.push({ level:'red', icon:'ti-calendar-x', text:`Dev deadline passed ${Math.abs(daysLeft)} day${Math.abs(daysLeft)!==1?'s':''} ago (was ${fmtDate(p.devBy)}) — ${remHrs} hrs still remaining` });
         topLevel = 'red';
-      } else if(workShouldHaveStarted && pct === 0) {
-        // No progress and latest start date already passed
-        const overdueBy = Math.abs(daysUntilLatestStart);
-        reasons.push({ level:'red', icon:'ti-player-play', text:`No work logged yet — needed to start by ${fmtDate(latestStart)} to fit ${remHrs} hrs before the ${fmtDate(p.devBy)} deadline. ${overdueBy} day${overdueBy!==1?'s':''} overdue to begin.` });
-        topLevel = 'red';
       } else if(p.rem > 0 && daysLeft > 0) {
-        // Compare hrs/day needed vs baseline
+        // Compare hrs/day needed vs the 6 hr/day baseline
         const hrsPerDayNeeded = remHrs / daysLeft;
         if(hrsPerDayNeeded > HRS_PER_DEV_DAY * 1.5) {
           // Needs >9 hrs/day — very unlikely to finish
