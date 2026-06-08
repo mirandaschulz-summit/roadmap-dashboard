@@ -1468,6 +1468,8 @@ async function syncJira() {
           const loeHrs = orig > 0 ? Math.round(orig/3600*10)/10 : Math.round((getLOE(c.fields)||0)*10)/10;
           // If done: remaining = 0. Otherwise: allow negative to surface over-LOE'd tickets.
           const remainingHrs = isDone ? 0 : Math.round((loeHrs - loggedHrs) * 10) / 10;
+          // savedHrs: how much under estimate a done ticket came in (positive = saved, negative = over)
+          const savedHrs = isDone && loeHrs > 0 ? Math.round((loeHrs - loggedHrs) * 10) / 10 : 0;
           return {
             key:c.key, summary:c.fields.summary,
             type: c.fields.issuetype?.name||'',
@@ -1479,6 +1481,7 @@ async function syncJira() {
             originalEst: loeHrs,
             remaining: remainingHrs,
             logged: loggedHrs,
+            saved: savedHrs,
             dueDate:parseDate(getF(c.fields,S.fields.devBy)||c.fields.duedate)||'—',
             worklogs
           };
@@ -1901,7 +1904,7 @@ function renderProjectsTab(){
               <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
               <td>${typeBadge}</td>
               <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
-              <td style="font-size:12px;color:${tRem<0?'#E24B4A':tRem>0?'var(--text)':'var(--text-3)'}">${tRem<0?tRem+'h over':''+( tRem||'0')}</td>
+              <td style="font-size:12px;color:${tRem<0?'#E24B4A':t.saved>0?'#1D9E75':tRem>0?'var(--text)':'var(--text-3)'};font-weight:${t.saved>0||tRem<0?'600':'400'}">${tRem<0?(Math.abs(tRem)+'h over'):t.saved>0?('+'+t.saved+'h saved'):(tRem||'0')}</td>
               <td>${tBar}</td>
               <td style="font-size:12px;color:var(--text-3);">—</td>
               <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -1931,7 +1934,7 @@ function renderProjectsTab(){
             <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
             <td>${typeBadge}</td>
             <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
-            <td style="font-size:12px;color:${tRem<0?'#E24B4A':tRem>0?'var(--text)':'var(--text-3)'}">${tRem<0?tRem+'h over':''+( tRem||'0')}</td>
+            <td style="font-size:12px;color:${tRem<0?'#E24B4A':t.saved>0?'#1D9E75':tRem>0?'var(--text)':'var(--text-3)'};font-weight:${t.saved>0||tRem<0?'600':'400'}">${tRem<0?(Math.abs(tRem)+'h over'):t.saved>0?('+'+t.saved+'h saved'):(tRem||'0')}</td>
             <td>${tBar}</td>
             <td style="font-size:12px;color:var(--text-3);">—</td>
             <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -2033,7 +2036,7 @@ function renderProjectsTab(){
           <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
           <td>${typeBadge}</td>
           <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
-          <td style="font-size:12px;color:${tRem<0?'#E24B4A':tRem>0?'var(--text)':'var(--text-3)'}">${tRem<0?tRem+'h over':''+( tRem||'0')}</td>
+          <td style="font-size:12px;color:${tRem<0?'#E24B4A':t.saved>0?'#1D9E75':tRem>0?'var(--text)':'var(--text-3)'};font-weight:${t.saved>0||tRem<0?'600':'400'}">${tRem<0?(Math.abs(tRem)+'h over'):t.saved>0?('+'+t.saved+'h saved'):(tRem||'0')}</td>
           <td>${tBar}</td>
           <td style="font-size:12px;color:var(--text-3);">—</td>
           <td style="font-size:12px;color:var(--text-3);">—</td>
@@ -2066,7 +2069,7 @@ function renderProjectsTab(){
         <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(t.summary)}">${esc(t.summary)}</td>
         <td>${typeBadge}</td>
         <td style="font-size:12px;">${t.loe ? Math.round(t.loe) : '—'}</td>
-        <td style="font-size:12px;color:${tRem<0?'#E24B4A':tRem>0?'var(--text)':'var(--text-3)'}">${tRem<0?tRem+'h over':''+( tRem||'0')}</td>
+        <td style="font-size:12px;color:${tRem<0?'#E24B4A':t.saved>0?'#1D9E75':tRem>0?'var(--text)':'var(--text-3)'};font-weight:${t.saved>0||tRem<0?'600':'400'}">${tRem<0?(Math.abs(tRem)+'h over'):t.saved>0?('+'+t.saved+'h saved'):(tRem||'0')}</td>
         <td>${tBar}</td>
         <td style="font-size:12px;color:var(--text-3);">—</td>
         <td style="font-size:12px;color:var(--text-3);">—</td>
