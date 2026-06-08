@@ -1025,6 +1025,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
         <div id="groupsList"></div>
         <div id="groupsSaved" style="display:none;"></div>
       </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;grid-column:span 2;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Team Roster</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:10px;">Only <strong>Developers</strong> count toward capacity in risk calculations. Edit names as comma-separated lists.</div>
+        <div id="rosterSection"></div>
+      </div>
     </div>
     <!-- Hidden inputs kept for JS compatibility -->
     <div style="display:none;">
@@ -1076,6 +1081,18 @@ const S = {
   ganttOffsets: {},
   ganttZoom: 16,
   ganttActiveEngs: [],
+  devRoster: {
+    developers: [
+      'Saad Zaman','Muzammil Abdul Ghafoor','Mati-ur-Rehman','Syed Noman Ali',
+      'Syed Shahiq Ur Rehman','Edward Schulz','Abdul Wahab','Muhammad Anas Bhatti',
+      'Hassan','Mustabshir Khan','Muhammad Maaz','Saba Pervez','Uzair Nadeem',
+      'Hamid Ali','Muhammad Zeerak','Muhammad Adnan Zahid','Ahsan Raza',
+      'Muhammad Ahmad Khan','Naveed Saleem','Muhammad Waleed','Muhammad Atif',
+      'Sandesh Kumar','Muhammad Shabaz'
+    ],
+    qa: ['Qasim Imran','Ahsan Musarrat','Mati ur Rehman (QA)','Hanzala','Mansoor Ali'],
+    content: ['Mehreen Hassan','Sahar Sayyada','Carlo Suits']
+  },
   groups: [
     { name: 'Trailblazers (K-1)', keys: ['LMS-25288','LMS-24929','LMS-25279','LMS-25289','LMS-28331'] },
     { name: 'Product Utilities Tool', keys: ['LMS-27848','LMS-24543'] },
@@ -1110,6 +1127,7 @@ function loadSettings() {
       if (saved.ganttZoom)       S.ganttZoom         = saved.ganttZoom;
       if (saved.ganttActiveEngs) S.ganttActiveEngs   = saved.ganttActiveEngs;
       if (saved.groups && saved.groups.length > 0) S.groups = saved.groups;
+      if (saved.devRoster) S.devRoster = Object.assign(S.devRoster, saved.devRoster);
     }
   } catch(e) {}
   if (!S.groups) S.groups = [];
@@ -1129,6 +1147,7 @@ function applyToForm() {
   if(S.fields.priority) document.getElementById('fieldPriority').value = S.fields.priority;
   renderTags();
   renderGroupsList();
+  renderRosterSection();
   renderDatesTable();
   if(S.lastSync) document.getElementById('lastSync').textContent = 'Synced ' + new Date(S.lastSync).toLocaleTimeString();
 }
@@ -2763,38 +2782,48 @@ function computeRisk(p) {
   const START_BUFFER_DAYS = 5;
 
   // Build per-assignee remaining hours from child tickets
+  // Build per-assignee remaining — only developers count toward capacity.
+  // Uses the Team Roster to identify devs. Falls back to logged-hours filter
+  // if roster is empty, and to all assignees if nothing has been logged yet.
+  const assigneeLogged = {};
   const assigneeRem = {};
   if(p.children && p.children.length) {
     p.children.forEach(c => {
       const name = c.assignee && c.assignee !== '—' ? c.assignee : '__unassigned__';
+      assigneeLogged[name] = (assigneeLogged[name] || 0) + (c.logged || 0);
       assigneeRem[name] = (assigneeRem[name] || 0) + (c.remaining || 0);
     });
   }
-  // Fall back to flat assignee list if no children data
-  if(Object.keys(assigneeRem).length === 0) {
+  const rosterHasDevs = S.devRoster && S.devRoster.developers && S.devRoster.developers.length > 0;
+  // Filter to known developers from roster; fall back to logged-hours if no roster
+  const devAssignees = Object.keys(assigneeRem).filter(name =>
+    rosterHasDevs ? isDevName(name) : (assigneeLogged[name] || 0) > 0
+  );
+  // If nobody qualifies (early stage / all unassigned), fall back to everyone so risk can still fire
+  const activeAssigneeRem = devAssignees.length > 0
+    ? Object.fromEntries(devAssignees.map(n => [n, assigneeRem[n]]))
+    : assigneeRem;
+  // Fall back to flat assignee list if no children data at all
+  if(Object.keys(activeAssigneeRem).length === 0) {
     const names = (p.assignees && p.assignees.length > 0) ? p.assignees : ['__unassigned__'];
-    names.forEach(n => { assigneeRem[n] = p.rem / names.length; });
+    names.forEach(n => { activeAssigneeRem[n] = p.rem / names.length; });
   }
 
   // Each assignee contributes min(their_rem_on_epic, 6) hrs/day — someone
   // with only 4 hrs of tickets realistically isn't burning 6 hrs/day on this epic
-  const dailyCapacity = Math.max(1, Object.values(assigneeRem).reduce((sum, rem) => {
+  const dailyCapacity = Math.max(1, Object.values(activeAssigneeRem).reduce((sum, rem) => {
     return sum + Math.min(rem > 0 ? HRS_PER_DEV_DAY : 0, HRS_PER_DEV_DAY); // negative rem = 0 contribution
   }, 0));
-  // But also floor each contributor's realistic daily rate by their total LOE share:
-  // if someone only has 8 hrs on the epic, they're done in ~1-2 days, not contributing
-  // a full 6 hrs/day for the entire duration. Use effective FTEs instead.
   // Clamp per-assignee remaining to 0 for capacity math — negative just means they over-ran, not that they have negative capacity
-  const assigneeRemClamped = Object.fromEntries(Object.entries(assigneeRem).map(([k,v])=>[k,Math.max(0,v)]));
+  const assigneeRemClamped = Object.fromEntries(Object.entries(activeAssigneeRem).map(([k,v])=>[k,Math.max(0,v)]));
   const totalAssigneeRem = Object.values(assigneeRemClamped).reduce((a, v) => a + v, 0);
   const effectiveDailyCapacity = Math.max(1, Object.entries(assigneeRemClamped).reduce((sum, [, rem]) => {
     if(rem <= 0) return sum;
     // Their share of total work × 6 hrs/day, capped at 6
     const share = totalAssigneeRem > 0 ? rem / totalAssigneeRem : 1;
-    // Weight: a 200hr person on a 212hr epic = ~6 hrs/day; 8hr person = ~0.23 hrs/day
     return sum + Math.min(share * HRS_PER_DEV_DAY * Object.keys(assigneeRemClamped).length, HRS_PER_DEV_DAY);
   }, 0));
-  const devCount = Object.keys(assigneeRem).length || 1;
+  const devCount = Object.keys(activeAssigneeRem).length || 1;
 
   // ── Timeline checks ────────────────────────────────────────────────────────
   if(p.devBy && p.devBy !== '—') {
@@ -2860,6 +2889,46 @@ function computeRisk(p) {
   }
 
   return { level: topLevel, reasons, pct, latestStart, daysLeft };
+}
+
+// ── Team Roster ────────────────────────────────────────────────────────────
+function renderRosterSection() {
+  const el = document.getElementById('rosterSection');
+  if(!el) return;
+  const roles = [
+    { key:'developers', label:'Developers', color:'var(--primary)', tip:'Counted toward capacity in risk calculations' },
+    { key:'qa',         label:'QA Engineers', color:'var(--warning)', tip:'Not counted toward dev capacity' },
+    { key:'content',    label:'Content Uploaders', color:'var(--text-3)', tip:'Not counted toward dev capacity' },
+  ];
+  el.innerHTML = roles.map(r => `
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:700;color:${r.color};text-transform:uppercase;letter-spacing:.04em;">${r.label}</span>
+        <span style="font-size:11px;color:var(--text-3);">— ${r.tip}</span>
+      </div>
+      <textarea id="roster_${r.key}" rows="2"
+        style="width:100%;font-size:12px;font-family:inherit;border:1px solid var(--border);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--text);resize:vertical;"
+        oninput="saveRoster()">${(S.devRoster[r.key]||[]).join(', ')}</textarea>
+    </div>`).join('');
+}
+
+function saveRoster() {
+  ['developers','qa','content'].forEach(key => {
+    const el = document.getElementById('roster_'+key);
+    if(el) S.devRoster[key] = el.value.split(',').map(n=>n.trim()).filter(Boolean);
+  });
+  persist();
+}
+
+function isDevName(name) {
+  if(!name || name === '—') return false;
+  const devs = (S.devRoster && S.devRoster.developers) || [];
+  // Case-insensitive partial match to handle display name variations
+  const nameLower = name.toLowerCase();
+  return devs.some(d => {
+    const dLower = d.toLowerCase();
+    return nameLower === dLower || nameLower.startsWith(dLower) || dLower.startsWith(nameLower);
+  });
 }
 
 function esc(str) {
