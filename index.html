@@ -2778,19 +2778,19 @@ function computeRisk(p) {
   let latestStart = null;
 
   // ── Capacity model ─────────────────────────────────────────────────────────
-  // Each engineer has 6 hrs/day, but their contribution to THIS epic is
+  // Each engineer has 8 hrs/day, but their contribution to THIS epic is
   // capped by how much work they actually have here — someone with 4 hrs of
   // tickets can't contribute a full day. We sum each assignee's daily
   // contribution: min(their_loe_on_epic / daysNeeded, 6) — but since daysNeeded
-  // depends on capacity we use a simpler proxy: cap at 6 hrs/day per person,
+  // depends on capacity we use a simpler proxy: cap at 8 hrs/day per person,
   // weighted by their share of remaining work so light assignees don't inflate capacity.
-  const HRS_PER_DEV_DAY = 6;
+  const HRS_PER_DEV_DAY = 8;
   const START_BUFFER_DAYS = 5;
 
   // Build per-assignee remaining hours from child tickets
   // ── Timeline checks ────────────────────────────────────────────────────────
   // Risk is based purely on remaining hours vs days left to the Dev Needed By date.
-  // Assumes 6 hrs/day as a baseline — no headcount factored in.
+  // Assumes 8 hrs/day as a baseline — no headcount factored in.
   if(p.devBy && p.devBy !== '—') {
     const devDate = new Date(p.devBy); devDate.setHours(0,0,0,0);
     daysLeft = Math.ceil((devDate - now) / 86400000);
@@ -2812,8 +2812,8 @@ function computeRisk(p) {
           reasons.push({ level:'red', icon:'ti-trending-down', text:`${remHrs} hrs remaining with only ${daysLeft} day${daysLeft!==1?'s':''} left (${Math.round(hrsPerDayNeeded*10)/10} hrs/day needed at baseline pace)` });
           topLevel = 'red';
         } else if(hrsPerDayNeeded > HRS_PER_DEV_DAY) {
-          // Needs >6 hrs/day — tight but possible
-          reasons.push({ level:'amber', icon:'ti-clock', text:`${remHrs} hrs remaining in ${daysLeft} day${daysLeft!==1?'s':''} — ${Math.round(hrsPerDayNeeded*10)/10} hrs/day needed, above the 6 hr/day baseline` });
+          // Needs >8 hrs/day — tight but possible
+          reasons.push({ level:'amber', icon:'ti-clock', text:`${remHrs} hrs remaining in ${daysLeft} day${daysLeft!==1?'s':''} — ${Math.round(hrsPerDayNeeded*10)/10} hrs/day needed, above the 8 hr/day baseline` });
           if(!topLevel) topLevel = 'amber';
         }
       }
