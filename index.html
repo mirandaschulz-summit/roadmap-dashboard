@@ -1458,12 +1458,15 @@ async function syncJira() {
                          statusName.includes('verified') || statusName.includes('on prod') ||
                          resolutionName === 'resolved' || resolutionName === 'done';
           const worklogs = worklogMap[c.key] || [];
-          // Use actual worklog sum if available, otherwise fall back to estimate math
+          // Use actual worklog sum if available, then timespent field, then derive from estimate math
           const workloggedSecs = worklogs.reduce((a,w) => a + (w.timeSpentSeconds||0), 0);
-          const jiraRem = parseFloat(c.fields.timeestimate||c.fields.timeoriginalestimate||0);
+          const jiraRem = parseFloat(c.fields.timeestimate||0);
+          const jiraTimespent = parseFloat(c.fields.timespent||0); // seconds, Jira's own tracked total
           const loggedSecs = workloggedSecs > 0
             ? workloggedSecs
-            : (isDone ? orig : Math.max(0, orig - jiraRem));
+            : jiraTimespent > 0
+              ? jiraTimespent  // use Jira's timespent directly — captures over-LOE correctly
+              : (isDone ? orig : Math.max(0, orig - jiraRem));
           const loggedHrs = Math.round(loggedSecs / 3600 * 10) / 10;
           const loeHrs = orig > 0 ? Math.round(orig/3600*10)/10 : Math.round((getLOE(c.fields)||0)*10)/10;
           // If done: remaining = 0. Otherwise: allow negative to surface over-LOE'd tickets.
