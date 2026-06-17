@@ -1100,7 +1100,7 @@ const S = {
     { name: 'District Success Manager', keys: ['LMS-26424','LMS-28687','LMS-28688','LMS-28689','LMS-28690'] },
     { name: 'C2L AZ Reports Improvements', keys: ['LMS-28119','LMS-28627'] },
     { name: 'C2L ELPA Reports Improvements', keys: ['LMS-28118','LMS-28608'] },
-    { name: 'C2L Essentials', keys: ['LMS-24393','LMS-28337'] },
+    { name: 'C2L Essentials', keys: ['LMS-24393','LMS-28337','LMS-28340'] },
     { name: 'Dynamic Science Assessment Bank', keys: ['LMS-26939','LMS-28318'] },
     { name: 'C2L All - Supplemental Table Updates', keys: ['LMS-27852','LMS-28323'] },
     { name: 'New LMS Question Types & Enhancements', keys: ['LMS-24418','LMS-28577','LMS-28579'] },
@@ -1385,6 +1385,14 @@ async function fetchAllDescendants(initiativeKey) {
     addAll(epicLinkStories);
   }
 
+  // For non-epic children that have subtasks (timespent=0 but subtasks exist),
+  // fetch their subtasks so time logged at the subtask level rolls up correctly
+  const nonEpics = allIssues.filter(i => !(i.fields.issuetype?.name||'').toLowerCase().includes('epic'));
+  for(const task of nonEpics) {
+    const subtasks = await searchIssues(`parent="${task.key}"`);
+    if(subtasks.length > 0) addAll(subtasks);
+  }
+
   return allIssues;
 }
 
@@ -1508,10 +1516,15 @@ async function syncJira() {
             worklogs
           };
       });
-      // Roll up LOE and remaining from mapped children
-      const rolledLOE = Math.round(mappedChildren.reduce((a,c)=>a+c.loe,0));
-      const rolledRem = Math.round(mappedChildren.reduce((a,c)=>a+c.remaining,0));
-      const rolledLogged = Math.round(mappedChildren.reduce((a,c)=>a+(c.logged||0),0));
+      // Roll up LOE and remaining from mapped children.
+      // Exclude any ticket that has its own subtasks already in the children list
+      // (i.e. it's a parent-of-subtasks), to avoid double-counting.
+      const childKeySet = new Set(mappedChildren.map(c => c.key));
+      const parentOfSubtaskKeys = new Set(mappedChildren.map(c => c.parentKey).filter(k => k && childKeySet.has(k)));
+      const rollupChildren = mappedChildren.filter(c => !parentOfSubtaskKeys.has(c.key));
+      const rolledLOE = Math.round(rollupChildren.reduce((a,c)=>a+c.loe,0));
+      const rolledRem = Math.round(rollupChildren.reduce((a,c)=>a+c.remaining,0));
+      const rolledLogged = Math.round(rollupChildren.reduce((a,c)=>a+(c.logged||0),0));
       results.push({
         key, summary:f.summary, status:f.status?.name||'',
         priority:getF(f,S.fields.priority)?.name||f.priority?.name||'',
