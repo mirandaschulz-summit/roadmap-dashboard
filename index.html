@@ -1894,7 +1894,8 @@ function renderProjectsTab(){
         </tr>`;
 
         epics.forEach((ep,ei)=>{
-          const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
+          const directEpicChildKeys = new Set(allTickets.filter(t=>t.parentKey===ep.key).map(t=>t.key));
+          const epicTickets = allTickets.filter(t=>t.parentKey===ep.key || directEpicChildKeys.has(t.parentKey));
           const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
           const ticketLogged = epicTickets.reduce((a,t)=>a+(t.logged||0),0);
           const ticketRem = epicTickets.reduce((a,t)=>a+(t.remaining||0),0);
@@ -2025,7 +2026,8 @@ function renderProjectsTab(){
     </tr>`;
 
     epics.forEach((ep,ei)=>{
-      const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
+      const directEpicChildKeys = new Set(allTickets.filter(t=>t.parentKey===ep.key).map(t=>t.key));
+      const epicTickets = allTickets.filter(t=>t.parentKey===ep.key || directEpicChildKeys.has(t.parentKey));
       const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
       const ticketLogged = epicTickets.reduce((a,t)=>a+(t.logged||0),0);
       const ticketRem = epicTickets.reduce((a,t)=>a+(t.remaining||0),0);
@@ -2254,7 +2256,8 @@ function renderHaltedTab(){
     </tr>`;
 
     epics.forEach((ep,ei) => {
-      const epicTickets = allTickets.filter(t=>t.parentKey===ep.key);
+      const directEpicChildKeys = new Set(allTickets.filter(t=>t.parentKey===ep.key).map(t=>t.key));
+      const epicTickets = allTickets.filter(t=>t.parentKey===ep.key || directEpicChildKeys.has(t.parentKey));
       const ticketLOE = epicTickets.reduce((a,t)=>a+t.loe,0);
       const ticketLogged = epicTickets.reduce((a,t)=>a+(t.logged||0),0);
       const ticketRem = epicTickets.reduce((a,t)=>a+(t.remaining||0),0);
