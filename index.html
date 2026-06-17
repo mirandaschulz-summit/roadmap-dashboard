@@ -1925,7 +1925,16 @@ function renderProjectsTab(){
             <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ep.assignee}</td>
             <td></td>
           </tr>`;
-          epicTickets.forEach(t=>{
+          // Separate direct tasks from subtasks
+          const directTasks1 = epicTickets.filter(t => t.parentKey === ep.key);
+          const subtaskMap1 = {};
+          epicTickets.filter(t => t.parentKey !== ep.key).forEach(st => {
+            if(!subtaskMap1[st.parentKey]) subtaskMap1[st.parentKey] = [];
+            subtaskMap1[st.parentKey].push(st);
+          });
+          directTasks1.forEach(t=>{
+            const tSubtasks = subtaskMap1[t.key] || [];
+            const tGroupId = `gtask-${gi}-${pi}-${ep.key}-${t.key}`;
             const tPct = t.isDone ? 100 : pct(t.loe, t.remaining, t.logged||0);
             const isBug = (t.type||'').toLowerCase().includes('bug');
             const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
@@ -1935,7 +1944,7 @@ function renderProjectsTab(){
             html+=`<tr class="accordion-row level-ticket" data-group="gep-${gi}-${pi}-${ep.key}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
               <td colspan="2" style="padding-left:84px;">
                 <div style="display:flex;align-items:center;gap:5px;">
-                  <span style="width:20px;flex-shrink:0;"></span>
+                  ${tSubtasks.length>0 ? `<button class="expand-btn" id="btn-${tGroupId}" onclick="toggleAccordion('${tGroupId}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
                   ${fileIcon}
                   <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
                 </div>
@@ -1951,10 +1960,41 @@ function renderProjectsTab(){
               <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.assignee}</td>
               <td></td>
             </tr>`;
+            tSubtasks.forEach(st=>{
+              const stPct = st.isDone ? 100 : pct(st.loe, st.remaining, st.logged||0);
+              const stRem = st.isDone ? 0 : Math.round((st.loe - (st.logged||0))*10)/10;
+              const stBarW=Math.min(100,stPct); const stBar = st.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${stBarW}%;background:${barColor(stPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(stPct)}</span></div>` : '—';
+              html+=`<tr class="accordion-row level-subtask" data-group="${tGroupId}" data-s="${esc(st.summary).toLowerCase()}" data-st="${(st.status||'').toLowerCase()}" style="display:none;">
+                <td colspan="2" style="padding-left:112px;">
+                  <div style="display:flex;align-items:center;gap:5px;">
+                    <span style="width:20px;flex-shrink:0;"></span>
+                    <i class="ti ti-subtask" style="color:#9999B0;font-size:12px;flex-shrink:0;"></i>
+                    <a href="https://${domain}/browse/${st.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${st.key}</a>
+                  </div>
+                </td>
+                <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(st.summary)}">${esc(st.summary)}</td>
+                <td><span class="badge b-gray">Sub-task</span></td>
+                <td style="font-size:12px;">${st.loe ? Math.round(st.loe) : '—'}</td>
+                <td style="font-size:12px;color:${stRem<0?'#E24B4A':st.saved>0?'#1D9E75':stRem>0?'var(--text)':'var(--text-3)'};font-weight:${st.saved>0||stRem<0?'600':'400'}">${stRem<0?(Math.abs(stRem)+'h over'):st.saved>0?('+'+st.saved+'h saved'):(stRem||'0')}</td>
+                <td>${stBar}</td>
+                <td style="font-size:12px;color:var(--text-3);">—</td>
+                <td style="font-size:12px;color:var(--text-3);">—</td>
+                <td>${statusBadge(st.status)}</td>
+                <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${st.assignee}</td>
+                <td></td>
+              </tr>`;
+            });
           });
         });
 
-        const orphans = allTickets.filter(t=>!t.parentKey||!epics.find(e=>e.key===t.parentKey));
+        // Orphans: direct children of initiative (not under any epic), excluding subtasks of tasks
+        const taskKeySet1 = new Set(allTickets.filter(t=>epics.find(e=>e.key===t.parentKey)).map(t=>t.key));
+        const orphans = allTickets.filter(t=> {
+          if(!t.parentKey) return true; // no parent — show
+          if(epics.find(e=>e.key===t.parentKey)) return false; // under an epic — not orphan
+          if(taskKeySet1.has(t.parentKey)) return false; // subtask of a task — not orphan
+          return true; // parentKey is the initiative itself or unknown
+        });
         orphans.forEach(t=>{
           const tPct = t.isDone ? 100 : pct(t.loe, t.remaining, t.logged||0);
           const isBug = (t.type||'').toLowerCase().includes('bug');
@@ -2059,7 +2099,16 @@ function renderProjectsTab(){
         <td></td>
       </tr>`;
 
-      epicTickets.forEach(t=>{
+      // Separate direct tasks from subtasks
+      const directTasks2 = epicTickets.filter(t => t.parentKey === ep.key);
+      const subtaskMap2 = {};
+      epicTickets.filter(t => t.parentKey !== ep.key).forEach(st => {
+        if(!subtaskMap2[st.parentKey]) subtaskMap2[st.parentKey] = [];
+        subtaskMap2[st.parentKey].push(st);
+      });
+      directTasks2.forEach(t=>{
+        const tSubtasks = subtaskMap2[t.key] || [];
+        const tGroupId2 = `task-${pi}-${ep.key}-${t.key}`;
         const tPct = t.isDone ? 100 : pct(t.loe, t.remaining, t.logged||0);
         const isBug = (t.type||'').toLowerCase().includes('bug');
         const typeBadge = isBug ? `<span class="badge b-red">Bug</span>` : `<span class="badge b-gray">${t.type||'Task'}</span>`;
@@ -2067,11 +2116,11 @@ function renderProjectsTab(){
           ? `<i class="ti ti-bug" style="color:#DC2626;font-size:12px;flex-shrink:0;"></i>`
           : `<i class="ti ti-circle-check" style="color:#6B7280;font-size:12px;flex-shrink:0;"></i>`;
         const tRem = t.isDone ? 0 : Math.round((t.loe - (t.logged||0))*10)/10;
-      const tBarW=Math.min(100,tPct); const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tBarW}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(tPct)}</span></div>` : '—';
+        const tBarW=Math.min(100,tPct); const tBar = t.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${tBarW}%;background:${barColor(tPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(tPct)}</span></div>` : '—';
         html+=`<tr class="accordion-row level-ticket" data-group="epic-${pi}-${ep.key}" data-s="${esc(t.summary).toLowerCase()}" data-st="${(t.status||'').toLowerCase()}" style="display:none;">
           <td colspan="2" style="padding-left:60px;">
             <div style="display:flex;align-items:center;gap:5px;">
-              <span style="width:20px;flex-shrink:0;"></span>
+              ${tSubtasks.length>0 ? `<button class="expand-btn" id="btn-${tGroupId2}" onclick="toggleAccordion('${tGroupId2}', this)" aria-expanded="false">${CHEVRON}</button>` : '<span style="width:20px;flex-shrink:0;"></span>'}
               ${fileIcon}
               <a href="https://${domain}/browse/${t.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${t.key}</a>
             </div>
@@ -2087,11 +2136,41 @@ function renderProjectsTab(){
           <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.assignee}</td>
           <td></td>
         </tr>`;
+        tSubtasks.forEach(st=>{
+          const stPct = st.isDone ? 100 : pct(st.loe, st.remaining, st.logged||0);
+          const stRem = st.isDone ? 0 : Math.round((st.loe - (st.logged||0))*10)/10;
+          const stBarW=Math.min(100,stPct); const stBar = st.loe>0 ? `<div style="display:flex;align-items:center;gap:6px;"><div class="progress-bar" style="min-width:50px;"><div class="progress-fill" style="width:${stBarW}%;background:${barColor(stPct)};"></div></div><span style="font-size:11px;min-width:28px;">${fmtPct(stPct)}</span></div>` : '—';
+          html+=`<tr class="accordion-row level-subtask" data-group="${tGroupId2}" data-s="${esc(st.summary).toLowerCase()}" data-st="${(st.status||'').toLowerCase()}" style="display:none;">
+            <td colspan="2" style="padding-left:88px;">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <span style="width:20px;flex-shrink:0;"></span>
+                <i class="ti ti-subtask" style="color:#9999B0;font-size:12px;flex-shrink:0;"></i>
+                <a href="https://${domain}/browse/${st.key}" target="_blank" style="font-size:11px;white-space:nowrap;">${st.key}</a>
+              </div>
+            </td>
+            <td style="font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;" title="${esc(st.summary)}">${esc(st.summary)}</td>
+            <td><span class="badge b-gray">Sub-task</span></td>
+            <td style="font-size:12px;">${st.loe ? Math.round(st.loe) : '—'}</td>
+            <td style="font-size:12px;color:${stRem<0?'#E24B4A':st.saved>0?'#1D9E75':stRem>0?'var(--text)':'var(--text-3)'};font-weight:${st.saved>0||stRem<0?'600':'400'}">${stRem<0?(Math.abs(stRem)+'h over'):st.saved>0?('+'+st.saved+'h saved'):(stRem||'0')}</td>
+            <td>${stBar}</td>
+            <td style="font-size:12px;color:var(--text-3);">—</td>
+            <td style="font-size:12px;color:var(--text-3);">—</td>
+            <td>${statusBadge(st.status)}</td>
+            <td style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${st.assignee}</td>
+            <td></td>
+          </tr>`;
+        });
       });
     });
 
-    // Orphan tickets not under any epic
-    const orphans = allTickets.filter(t=>!t.parentKey||!epics.find(e=>e.key===t.parentKey));
+    // Orphan tickets not under any epic, excluding subtasks of tasks
+    const taskKeySet2 = new Set(allTickets.filter(t=>epics.find(e=>e.key===t.parentKey)).map(t=>t.key));
+    const orphans = allTickets.filter(t => {
+      if(!t.parentKey) return true;
+      if(epics.find(e=>e.key===t.parentKey)) return false;
+      if(taskKeySet2.has(t.parentKey)) return false;
+      return true;
+    });
     orphans.forEach(t=>{
       const tPct = t.isDone ? 100 : pct(t.loe, t.remaining, t.logged||0);
       const isBug = (t.type||'').toLowerCase().includes('bug');
